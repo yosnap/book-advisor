@@ -2,6 +2,7 @@
 
 **Sesión de Desarrollo · 60 minutos**
 **Stack:** Next.js 16 | Neon + Prisma | n8n | Telegram Bot | Tailwind CSS | Pencil.dev
+**URL Producción:** `https://books.codeia.dev`
 
 ---
 

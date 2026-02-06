@@ -913,12 +913,15 @@ npx prisma generate
 ### 10.2 Variables de Entorno
 
 ```env
-# .env.local
+# .env.local (desarrollo)
 DATABASE_URL=postgresql://user:password@neon.tech/dbname
 N8N_WEBHOOK_URL=https://n8n-instance.com/webhook/recommend
 OPENAI_API_KEY=sk-...
 TELEGRAM_BOT_TOKEN=123456789:ABCDefghi...
-TELEGRAM_BOT_WEBHOOK=https://yourdomain.com/api/webhooks/telegram
+TELEGRAM_BOT_WEBHOOK=https://books.codeia.dev/api/webhooks/telegram
+
+# .env.production (producción)
+NEXT_PUBLIC_APP_URL=https://books.codeia.dev
 ```
 
 ### 10.3 Setup n8n
@@ -945,24 +948,48 @@ TELEGRAM_BOT_WEBHOOK=https://yourdomain.com/api/webhooks/telegram
 
 ### 11.1 Stack de Producción
 
-- **Frontend/API**: Vercel (Next.js)
+- **Frontend/API**: Vercel (Next.js) → `https://books.codeia.dev`
 - **BD**: Neon (PostgreSQL managed)
 - **Automatización**: n8n Cloud o self-hosted
 - **Bot**: Telegram Bot API (serverless, sin deploy)
+- **Webhooks**:
+  - n8n: `https://books.codeia.dev/api/webhooks/n8n/recommend`
+  - Telegram: `https://books.codeia.dev/api/webhooks/telegram`
 
 ### 11.2 Environment per Stage
 
 ```
-.env.local        → desarrollo
-.env.staging      → staging (Neon staging branch)
-.env.production   → producción
+.env.local        → desarrollo (localhost:3000)
+.env.staging      → staging (staging.books.codeia.dev)
+.env.production   → producción (books.codeia.dev)
 ```
 
-### 11.3 CI/CD
+### 11.3 URLs por Entorno
+
+**Desarrollo:**
+```
+Web:      http://localhost:3000
+API:      http://localhost:3000/api
+Admin:    http://localhost:3000/admin
+```
+
+**Producción:**
+```
+Web:      https://books.codeia.dev
+API:      https://books.codeia.dev/api
+Admin:    https://books.codeia.dev/admin
+Webhooks:
+  - n8n:      https://books.codeia.dev/api/webhooks/n8n/recommend
+  - Telegram: https://books.codeia.dev/api/webhooks/telegram
+```
+
+### 11.4 CI/CD
 
 - Prisma migrations antes de deploy
 - Run tests (si existen)
-- Deploy a Vercel
+- Deploy a Vercel con auto-deploy desde main branch
+- Validar webhooks están configurados en n8n y Telegram API
+- Health check: `GET https://books.codeia.dev/api/health`
 
 ---
 
