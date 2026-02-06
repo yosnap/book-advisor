@@ -1,0 +1,534 @@
+{
+  "projectName": "Web Inteligente de Recomendación de Libros",
+  "description": "Sistema completo de recomendación de libros gobernado por contexto, persistido, trazable y escalable",
+  "version": "1.0.0",
+  "environment": "development",
+
+  "project": {
+    "name": "book-advisor",
+    "type": "full-stack",
+    "phase": "development",
+    "branch": "agents",
+    "status": "implementando agentes y MCPs",
+    "productionUrl": "https://books.codeia.dev"
+  },
+
+  "stack": {
+    "framework": {
+      "web": "Next.js 16",
+      "ui": "React 18+",
+      "styling": "Tailwind CSS 3+"
+    },
+    "database": {
+      "provider": "Neon (PostgreSQL serverless)",
+      "orm": "Prisma",
+      "features": ["serverless", "autoscaling", "connection pooling"]
+    },
+    "workflow": {
+      "engine": "n8n",
+      "deployment": "cloud.n8n.io",
+      "authentication": "API Key",
+      "webhooks": true
+    },
+    "messaging": {
+      "telegram": "Telegram Bot API",
+      "integration": "direct to n8n workflows"
+    },
+    "design": {
+      "prototyping": "Pencil.dev",
+      "export": "Tailwind CSS components"
+    },
+    "ai": {
+      "agents": "Claude Code + MCP",
+      "modelFamily": "Claude 4.5/4.6",
+      "recommendedModels": {
+        "planning": "claude-opus-4-6",
+        "implementation": "claude-sonnet-4-5-20250929",
+        "lightweight": "claude-haiku-4-5-20251001"
+      }
+    }
+  },
+
+  "architecture": {
+    "pattern": "multi-agent with context engineering",
+    "components": {
+      "web": {
+        "name": "Web Inteligente",
+        "framework": "Next.js 16",
+        "responsibilities": [
+          "Capturar contexto del lector",
+          "Presentar recomendaciones razonadas",
+          "Dashboard de administración (CRUD libros)",
+          "API REST para orquestación",
+          "Server Components para lógica de contexto"
+        ],
+        "routes": {
+          "public": ["/", "/recommendations", "/about"],
+          "api": ["/api/context/capture", "/api/recommendations", "/api/books"],
+          "admin": ["/admin/books", "/admin/recommendations", "/admin/dashboard"]
+        }
+      },
+      "database": {
+        "name": "Neon + Prisma",
+        "responsibilities": [
+          "Persistencia de libros",
+          "Contexto del lector",
+          "Historial de recomendaciones",
+          "Datos de usuarios admin"
+        ],
+        "tables": [
+          "books",
+          "reader_contexts",
+          "recommendations",
+          "admin_users"
+        ]
+      },
+      "orchestrator": {
+        "name": "Agente Orquestador (n8n workflow)",
+        "responsibilities": [
+          "Recibir contexto estructurado",
+          "Analizar estado emocional + perfil + intereses",
+          "Consultar catálogo en Neon",
+          "Delegar decisiones a subagentes",
+          "Devolver recomendaciones razonadas",
+          "Registrar decisión en BD"
+        ],
+        "webhookUrl": "${N8N_WEBHOOK_BASE}/book-recommendation"
+      },
+      "telegram": {
+        "name": "Bot de Telegram",
+        "responsibilities": [
+          "Capturar contexto vía conversación",
+          "Invocar flujo n8n",
+          "Recibir y mostrar recomendaciones",
+          "Persistir datos en Neon",
+          "Mismo flujo que web (sin UI)"
+        ],
+        "token": "${TELEGRAM_BOT_TOKEN}"
+      }
+    },
+    "agentStructure": {
+      "orchestrator": {
+        "role": "Coordinar todo el flujo del sistema",
+        "responsibilities": [
+          "Orquestar subagentes",
+          "Persistir decisiones",
+          "Manejar errores globales",
+          "Logging y trazabilidad"
+        ],
+        "tools": [
+          "context_agent",
+          "search_agent",
+          "scoring_agent",
+          "justifier_agent",
+          "persistence_agent",
+          "neon_mcp"
+        ]
+      },
+      "subagents": {
+        "context_agent": {
+          "role": "Capturar y validar contexto del lector",
+          "responsibilities": [
+            "Parse de inputs",
+            "Validación de esquema",
+            "Enriquecimiento de contexto",
+            "Normalización de datos"
+          ],
+          "tools": ["validators", "context_schema"]
+        },
+        "search_agent": {
+          "role": "Consultar BD y filtrar libros",
+          "responsibilities": [
+            "Query a Neon",
+            "Aplicar filtros por género/tema",
+            "Indexación",
+            "Optimización de búsqueda"
+          ],
+          "tools": ["neon_mcp", "sql_builder"]
+        },
+        "scoring_agent": {
+          "role": "Calcular match scores",
+          "responsibilities": [
+            "Matching logic contextual",
+            "Cálculo de puntuaciones",
+            "Algoritmos de similitud",
+            "Ranking de resultados"
+          ],
+          "tools": ["math_functions", "similarity_algorithms"]
+        },
+        "justifier_agent": {
+          "role": "Generar justificaciones razonadas",
+          "responsibilities": [
+            "Crear narrativas de recomendación",
+            "Explicar por qué cada libro",
+            "Conectar con contexto del lector",
+            "Lenguaje personalizado"
+          ],
+          "tools": ["claude_api", "prompt_templates"]
+        },
+        "persistence_agent": {
+          "role": "Guardar decisiones en BD",
+          "responsibilities": [
+            "Persistir recomendaciones",
+            "Logging de decisiones",
+            "Auditoría de cambios",
+            "Garantías ACID"
+          ],
+          "tools": ["neon_mcp", "orm_queries"]
+        }
+      }
+    }
+  },
+
+  "dataModel": {
+    "contexts": {
+      "reader": {
+        "mood": "estado emocional actual",
+        "profile": "novato|intermedio|avanzado",
+        "interests": "array de géneros/temas",
+        "intent": "relax|aprendizaje|evasión",
+        "preferences": "preferencias personales"
+      },
+      "book": {
+        "title": "string",
+        "author": "string",
+        "genre": "string",
+        "synopsis": "text",
+        "relevanceScore": "float 0-1"
+      },
+      "recommendation": {
+        "readerId": "uuid",
+        "bookIds": "uuid[]",
+        "scores": "float[]",
+        "justifications": "string[]",
+        "createdAt": "timestamp",
+        "feedback": "optional feedback"
+      }
+    }
+  },
+
+  "environment": {
+    "development": {
+      "NODE_ENV": "development",
+      "NEXT_PUBLIC_API_URL": "http://localhost:3000",
+      "DATABASE_URL": "postgresql://neondb_owner:npg_Ts6EWcSthbI5@ep-mute-bread-ag0ndobb-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+      "NEON_API_KEY": "${NEON_DEV_KEY}",
+      "N8N_WEBHOOK_BASE": "http://localhost:5678/webhook",
+      "TELEGRAM_BOT_TOKEN": "${TELEGRAM_BOT_TOKEN_DEV}",
+      "CLAUDE_API_KEY": "${ANTHROPIC_API_KEY}"
+    },
+    "production": {
+      "NODE_ENV": "production",
+      "NEXT_PUBLIC_API_URL": "https://books.codeia.dev",
+      "DATABASE_URL": "${NEON_PROD_DATABASE_URL}",
+      "NEON_API_KEY": "${NEON_PROD_KEY}",
+      "N8N_WEBHOOK_BASE": "${N8N_PRODUCTION_WEBHOOK}",
+      "TELEGRAM_BOT_TOKEN": "${TELEGRAM_BOT_TOKEN_PROD}",
+      "CLAUDE_API_KEY": "${ANTHROPIC_API_KEY}"
+    }
+  },
+
+  "mcp": {
+    "servers": {
+      "neon": {
+        "name": "Neon Database MCP",
+        "purpose": "Query PostgreSQL database at Neon",
+        "status": "use official mcp-servers implementation",
+        "tools": [
+          {
+            "name": "query",
+            "description": "Execute SQL query",
+            "params": ["sql", "params"]
+          },
+          {
+            "name": "beginTransaction",
+            "description": "Start ACID transaction",
+            "params": []
+          },
+          {
+            "name": "getSchema",
+            "description": "Introspect database schema",
+            "params": []
+          },
+          {
+            "name": "healthCheck",
+            "description": "Verify connection health",
+            "params": []
+          }
+        ],
+        "config": {
+          "databaseUrl": "${DATABASE_URL}",
+          "connectionPooling": true,
+          "maxConnections": 10,
+          "retryPolicy": "exponential_backoff"
+        }
+      },
+      "n8n": {
+        "name": "n8n Workflow MCP",
+        "purpose": "Execute n8n workflows as native agent tools",
+        "status": "to be implemented",
+        "tools": [
+          {
+            "name": "execute_workflow",
+            "description": "Execute n8n workflow",
+            "params": ["workflowId", "payload"]
+          },
+          {
+            "name": "list_workflows",
+            "description": "List available workflows",
+            "params": []
+          },
+          {
+            "name": "get_workflow_schema",
+            "description": "Get input/output schema",
+            "params": ["workflowId"]
+          },
+          {
+            "name": "poll_result",
+            "description": "Poll for async execution result",
+            "params": ["executionId"]
+          }
+        ],
+        "config": {
+          "baseUrl": "https://cloud.n8n.io",
+          "apiKey": "${N8N_API_KEY}",
+          "authentication": "api_key",
+          "webhookSignatureVerification": true
+        }
+      }
+    }
+  },
+
+  "apiEndpoints": {
+    "public": {
+      "getRecommendations": {
+        "method": "POST",
+        "path": "/api/recommendations",
+        "description": "Obtener recomendaciones de libros",
+        "payload": {
+          "mood": "string",
+          "profile": "string",
+          "interests": "string[]",
+          "intent": "string"
+        },
+        "response": {
+          "recommendations": "object[]",
+          "justifications": "string[]"
+        }
+      },
+      "listBooks": {
+        "method": "GET",
+        "path": "/api/books",
+        "description": "Listar libros disponibles",
+        "query": {
+          "genre": "optional",
+          "author": "optional",
+          "limit": "number"
+        }
+      }
+    },
+    "admin": {
+      "createBook": {
+        "method": "POST",
+        "path": "/api/admin/books",
+        "description": "Crear nuevo libro",
+        "auth": "required"
+      },
+      "updateBook": {
+        "method": "PUT",
+        "path": "/api/admin/books/:id",
+        "description": "Actualizar libro",
+        "auth": "required"
+      },
+      "deleteBook": {
+        "method": "DELETE",
+        "path": "/api/admin/books/:id",
+        "description": "Eliminar libro",
+        "auth": "required"
+      },
+      "bulkUpload": {
+        "method": "POST",
+        "path": "/api/admin/books/bulk",
+        "description": "Carga masiva de libros (CSV)",
+        "auth": "required"
+      },
+      "getStats": {
+        "method": "GET",
+        "path": "/api/admin/stats",
+        "description": "Estadísticas de recomendaciones",
+        "auth": "required"
+      }
+    }
+  },
+
+  "workflows": {
+    "bookRecommendation": {
+      "name": "Book Recommendation Workflow",
+      "description": "Flujo completo de recomendación de libros",
+      "trigger": "webhook",
+      "steps": [
+        {
+          "id": 1,
+          "name": "Recibir contexto",
+          "type": "webhook",
+          "outputs": "contextData"
+        },
+        {
+          "id": 2,
+          "name": "Validar contexto",
+          "type": "node",
+          "function": "validateContext"
+        },
+        {
+          "id": 3,
+          "name": "Consultar BD",
+          "type": "database",
+          "function": "queryBooks"
+        },
+        {
+          "id": 4,
+          "name": "Calcular scores",
+          "type": "logic",
+          "function": "calculateMatchScores"
+        },
+        {
+          "id": 5,
+          "name": "Generar justificaciones",
+          "type": "ai",
+          "function": "generateJustifications"
+        },
+        {
+          "id": 6,
+          "name": "Guardar en BD",
+          "type": "database",
+          "function": "persistRecommendation"
+        },
+        {
+          "id": 7,
+          "name": "Devolver respuesta",
+          "type": "response",
+          "outputs": "recommendationData"
+        }
+      ]
+    }
+  },
+
+  "development": {
+    "gitBranches": {
+      "main": "producción y releases",
+      "develop": "development continuo",
+      "agents": "desarrollo de agentes y MCPs",
+      "feature/*": "features individuales"
+    },
+    "devTools": {
+      "versionControl": "git",
+      "packageManager": "npm o pnpm",
+      "linting": "eslint",
+      "formatting": "prettier",
+      "testing": "jest + testing-library",
+      "documentation": "markdown + docs/"
+    },
+    "codeStyle": {
+      "language": "TypeScript preferred",
+      "formatting": "Prettier with project config",
+      "naming": "camelCase for JS, snake_case for SQL",
+      "comments": "Only for non-obvious logic"
+    },
+    "directories": {
+      "src": "Source code",
+      "src/app": "Next.js App Router",
+      "src/components": "React components",
+      "src/api": "API routes",
+      "src/lib": "Utilities and helpers",
+      "src/types": "TypeScript types",
+      "src/schemas": "Validation schemas",
+      "prisma": "Prisma schema and migrations",
+      "docs": "Documentation",
+      ".claude": "Claude Code settings and configs"
+    }
+  },
+
+  "checklist": {
+    "planningPhase": {
+      "architecture": {
+        "visionAndContext": true,
+        "schemaDesign": true,
+        "jsonModel": true,
+        "flowDocumentation": true
+      },
+      "planning": {
+        "n8nWorkflow": true,
+        "apiEndpoints": true,
+        "telegramBot": true,
+        "agentsOrchestration": true,
+        "mcpsPlanning": true
+      },
+      "setup": {
+        "repoInitialized": true,
+        "basicStructure": true,
+        "docsCreated": true
+      }
+    },
+    "phase1Core": {
+      "setup": false,
+      "prismaSchema": false,
+      "apiEndpoints": false,
+      "n8nIntegration": false,
+      "endToEndTesting": false
+    },
+    "phase2Admin": {
+      "dashboard": false,
+      "crudOperations": false,
+      "bulkUpload": false,
+      "statistics": false
+    },
+    "phase3Agents": {
+      "mcpNeon": false,
+      "mcpN8n": false,
+      "orchestratorAgent": false,
+      "subagents": false,
+      "multiAgentTesting": false
+    },
+    "phase4Channels": {
+      "telegramBot": false,
+      "botIntegration": false,
+      "endToEndTesting": false
+    }
+  },
+
+  "documentation": {
+    "structure": {
+      "projectInfo": "docs/project-info.md",
+      "technicalArchitecture": "docs/technical-architecture.md",
+      "apiDocumentation": "docs/api.md",
+      "deploymentGuide": "docs/deployment.md",
+      "mcpGuide": "docs/mcp-guide.md"
+    },
+    "key_files": [
+      "README.md",
+      "docs/project-info.md",
+      "docs/technical-architecture.md",
+      ".claude/settings.json",
+      "prisma/schema.prisma"
+    ]
+  },
+
+  "guidelines": {
+    "philosophy": "Ingeniería de Contexto: construir sistemas inteligentes gobernados por contexto, persistidos, trazables y escalables",
+    "principles": [
+      "No construimos webs con IA, construimos sistemas inteligentes",
+      "La inteligencia vive en el contexto, no en prompts sueltos",
+      "Las decisiones deben ser trazables y persistidas",
+      "La arquitectura debe ser desacoplada y escalable",
+      "Cada agente tiene responsabilidades claras y limitadas"
+    ],
+    "beforeCoding": [
+      "Define la visión del sistema",
+      "Define el problema real que resolvemos",
+      "Define por qué esto NO es 'vibecoding'",
+      "Diseña la arquitectura de agentes",
+      "Especifica inputs/outputs JSON",
+      "Documenta el flujo completo"
+    ]
+  }
+}
