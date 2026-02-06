@@ -265,36 +265,185 @@ Formato: Markdown.
 
 ---
 
+### 6.7 Prompt de agentes orquestadores – Arquitectura multi-agente
+
+```
+Actúas como arquitecto de sistemas multi-agente especializado en Ingeniería de Contexto.
+
+Define la arquitectura de agentes para el sistema de recomendación de libros:
+
+AGENTE PRINCIPAL (Orchestrator):
+- Rol: Orquestar todo el flujo del sistema
+- Responsabilidades: Coordinar subagentes, persistir decisiones
+- Inputs: Contexto del usuario
+- Outputs: Recomendaciones finales + metadata
+- Tools: Subagentes, BD queries, webhooks
+- Limitaciones: No decide directamente, delega
+
+SUBAGENTES:
+1. Agente Contexto
+   - Rol: Capturar y validar contexto
+   - Responsabilidades: Parse inputs, enriquecer contexto
+   - Tools: Validators, context schema
+   - Limitaciones: Solo captura, no decide
+
+2. Agente Búsqueda (Search Agent)
+   - Rol: Consultar BD y filtrar libros
+   - Responsabilidades: Query Neon, aplicar filtros
+   - Tools: Neon MCP, SQL queries, indexing
+   - Limitaciones: Solo búsqueda, sin ranking
+
+3. Agente Scoring
+   - Rol: Calcular match scores
+   - Responsabilidades: Matching logic, calcular scores
+   - Tools: Algoritmos, math functions
+   - Limitaciones: Score técnico, sin inteligencia
+
+4. Agente Justificador (LLM-based)
+   - Rol: Generar justificaciones
+   - Responsabilidades: Crear narrativas razonadas
+   - Tools: Claude/ChatGPT API, prompt templates
+   - Limitaciones: Solo justificaciones, no decisiones
+
+5. Agente Persistencia
+   - Rol: Guardar decisiones
+   - Responsabilidades: Guardar en BD, logging
+   - Tools: Neon MCP, ORM queries
+   - Limitaciones: ACID guarantees
+
+FLUJO:
+Orchestrator → Contexto → Búsqueda → Scoring → Justificador → Persistencia → Respuesta
+
+SKILLS REQUERIDAS:
+- Per agent
+- Versioning
+- Error handling
+- Retry logic
+- Observability
+
+Formato: Markdown.
+```
+
+---
+
+### 6.8 Prompt de MCP – Motor de n8n integrado
+
+```
+Actúas como diseñador de Model Context Protocol (MCP) para n8n.
+
+Especifica un MCP que actúe como puente entre el sistema y n8n:
+
+OBJETIVO:
+Permitir que agentes Claude usen n8n workflows como tools nativos.
+
+CAPABILITIES (Tools a exponer):
+1. execute_workflow
+   - Input: workflowId, payload
+   - Output: workflow result
+   - Uso: Ejecutar flujos n8n desde agentes
+
+2. list_workflows
+   - Output: [{id, name, description}]
+   - Uso: Descubrir workflows disponibles
+
+3. get_workflow_schema
+   - Input: workflowId
+   - Output: JSON schema de inputs/outputs
+   - Uso: Validar payloads antes de ejecutar
+
+4. poll_result
+   - Input: executionId
+   - Output: Status + result JSON
+   - Uso: Obtener resultados de ejecuciones async
+
+AUTENTICACIÓN:
+- n8n API Key
+- Webhook signatures verification
+
+ERRORES A MANEJAR:
+- Workflow not found
+- Invalid payload schema
+- Execution timeout
+- Rate limiting
+
+Formato: Markdown + pseudocódigo.
+```
+
+---
+
+### 6.9 Prompt de MCP – Neon connector (reference)
+
+```
+Nota: Usaremos MCP de Neon existente en repositorio oficial.
+
+Características esperadas:
+- query() → ejecutar SQL
+- beginTransaction() → ACID
+- getSchema() → introspection
+- Health checks
+
+Configuración necesaria:
+- DATABASE_URL
+- Connection pooling
+- Retry policies
+
+Referencia: Neon MCP en https://github.com/anthropics/mcp-servers
+```
+
+---
+
 ## 7. Checklist de Implementación
 
-**Sesión 60 min:**
+**Sesión 60 min (Arquitectura & Planning):**
 - [ ] Visión y contexto claros
-- [ ] Schema Prisma definido (Reader, Books, Recommendations)
+- [ ] Schema Prisma definido (Reader, Books, Recommendations, AdminUsers)
 - [ ] Modelo JSON de contexto cerrado
 - [ ] Flujo web → n8n → respuesta documentado
 - [ ] n8n workflow prototipado
 - [ ] Endpoints API en Next.js definidos
 - [ ] Telegram Bot architecture bosquejada
+- [ ] **Agentes orquestadores definidos** (Orchestrator + Sub-agentes)
+- [ ] **MCPs planificados** (Neon MCP + n8n MCP)
 - [ ] Repo inicializado con setup básico
 
-**Post-sesión (desarrollo iterativo):**
+**Post-sesión (Desarrollo Fase 1: Core):**
 - [ ] Setup completo (Next.js + Neon + Prisma)
+- [ ] Schema Prisma migrado a BD
+- [ ] Endpoints API en Next.js funcionando
+- [ ] n8n workflow integrado con Neon
+- [ ] Testing de flujo web → n8n → respuesta
+
+**Fase 2 (Admin & Dashboard):**
 - [ ] Dashboard admin CRUD de libros
-- [ ] Formulario de captura en web
-- [ ] n8n workflow integrado
+- [ ] Bulk upload de libros (CSV)
+- [ ] Estadísticas de recomendaciones
+
+**Fase 3 (Agentes & MCPs):**
+- [ ] MCP Neon implementado
+- [ ] MCP n8n creado e integrado
+- [ ] Agente Orchestrator en Claude Code
+- [ ] Sub-agentes funcionales
+- [ ] Testing de flujos multi-agente
+
+**Fase 4 (Canales Alternos):**
 - [ ] Bot de Telegram funcional
-- [ ] Testing e5e
+- [ ] Integración Telegram → MCP Neon
+- [ ] Testing e2e
 
 ---
 
 ## 8. Recursos Técnicos
 
 Ver `docs/technical-architecture.md` para:
-- Schemas Prisma detallados
-- API endpoints
-- Estructura de payloads JSON
-- Setup paso a paso
-- Deploy en producción
+- Arquitectura multi-agente y MCPs (Sección 9)
+- Schemas Prisma detallados (Sección 3)
+- API endpoints (Sección 4)
+- Estructura de payloads JSON (Sección 5)
+- n8n workflow logic (Sección 6)
+- Telegram Bot integration (Sección 7)
+- MCP Neon y MCP n8n (Sección 9)
+- Setup paso a paso (Sección 10)
+- Deploy en producción (Sección 11)
 
 ---
 

@@ -583,6 +583,307 @@ Bot: "¡Excelente! Anotado. ¿Otra recomendación?"
 
 ---
 
+## 9. Model Context Protocol (MCP) – Agentes y Automatización
+
+### 9.1 Visión de MCPs en el Sistema
+
+Los MCPs permiten que agentes Claude (ejecutados en nuestra orquestación) accedan a herramientas y sistemas externos de forma nativa:
+
+```
+Agent Claude (Orchestrator)
+  │
+  ├─ MCP: Neon (Query BD)
+  ├─ MCP: n8n (Execute workflows)
+  └─ MCP: Custom (Business logic)
+
+Cada MCP expone "tools" que el agente puede invocar como funciones
+```
+
+### 9.2 MCP para Neon (Existente)
+
+**Fuente:** [anthropics/mcp-servers/neon](https://github.com/anthropics/mcp-servers)
+
+**Capabilities:**
+```json
+{
+  "tools": [
+    {
+      "name": "execute_query",
+      "description": "Execute SQL query against Neon",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sql": {"type": "string"},
+          "params": {"type": "array"}
+        }
+      }
+    },
+    {
+      "name": "get_schema",
+      "description": "Introspect database schema"
+    },
+    {
+      "name": "begin_transaction",
+      "description": "Start a transaction"
+    }
+  ]
+}
+```
+
+**Setup:**
+```env
+NEON_DATABASE_URL=postgresql://user:pass@neon.tech/dbname
+NEON_API_KEY=neon_api_key_here
+```
+
+**Uso en agentes:**
+```
+Agent: "Dame los libros en género Ficción"
+→ MCP Neon.execute_query("SELECT * FROM Book WHERE genre = 'Ficción'")
+→ Retorna [{id, title, author, ...}]
+```
+
+### 9.3 MCP para n8n (Crear)
+
+**Objetivo:** Exponer n8n workflows como tools para agentes Claude
+
+**Capabilities a exponer:**
+
+```json
+{
+  "tools": [
+    {
+      "name": "execute_workflow",
+      "description": "Execute an n8n workflow and wait for result",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "workflowId": {"type": "string"},
+          "payload": {"type": "object"}
+        },
+        "required": ["workflowId", "payload"]
+      }
+    },
+    {
+      "name": "list_workflows",
+      "description": "List all available workflows"
+    },
+    {
+      "name": "get_workflow_schema",
+      "description": "Get input/output schema for a workflow",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "workflowId": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "poll_execution",
+      "description": "Poll status of async workflow execution",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "executionId": {"type": "string"}
+        }
+      }
+    }
+  ]
+}
+```
+
+**Arquitectura interna:**
+
+```
+Client (MCP)
+  │
+  POST /api/v1/execute
+  │
+  n8n Instance
+  │
+  ├─ Validate workflow exists
+  ├─ Validate payload schema
+  ├─ Start execution (async o sync)
+  ├─ Poll for result
+  └─ Return {status, result, errors}
+```
+
+**Prompt de Creación (para MCP n8n):**
+
+```
+Diseña un Model Context Protocol (MCP) que:
+
+1. Se integre con una instancia n8n
+2. Exponga n8n workflows como herramientas Claude
+
+REQUERIMIENTOS:
+- Execute workflows (sync y async)
+- Validate input schemas
+- Handle timeouts
+- Retry logic
+- Error propagation
+
+AUTENTICACIÓN:
+- n8n API Key (header)
+- Webhook signatures
+
+EJEMPLOS:
+Agent: "Ejecuta el workflow de recomendaciones con este contexto"
+→ MCP.execute_workflow("recommend-books", {mood, readerType, ...})
+→ Espera resultado
+→ Retorna {recommendations: [...], reasoning: {...}}
+
+Implementar en:
+- Language: TypeScript/Node.js
+- Framework: MCP SDK
+- Hosting: Docker container o Vercel serverless
+```
+
+**Implementación esperada:**
+
+```typescript
+// File: mcp-n8n/src/index.ts
+
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+
+const server = new Server({
+  name: "n8n-mcp",
+  version: "1.0.0",
+});
+
+// Tool: execute_workflow
+server.setRequestHandler(
+  toolCall,
+  async (request: ToolCallRequest) => {
+    if (request.params.name === "execute_workflow") {
+      const { workflowId, payload } = request.params.arguments;
+      const result = await executeN8nWorkflow(workflowId, payload);
+      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+    }
+  }
+);
+
+async function executeN8nWorkflow(id: string, payload: any) {
+  const response = await fetch(
+    `${process.env.N8N_URL}/api/v1/workflows/${id}/execute`,
+    {
+      method: "POST",
+      headers: {
+        "X-N8N-API-KEY": process.env.N8N_API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+  return response.json();
+}
+```
+
+### 9.4 Arquitectura Multi-Agente con MCPs
+
+**Agente Orquestador (Principal)**
+```
+Responsabilidad: Coordinar flujo completo
+Tools:
+  - MCP Neon: Query BD
+  - MCP n8n: Execute recommendations
+  - Sub-agents: Contexto, validación
+```
+
+**Sub-agente Contexto**
+```
+Responsabilidad: Capturar y enriquecer contexto
+Tools:
+  - MCP Neon: Verificar historial del usuario
+  - Validators: Schema validation
+```
+
+**Sub-agente Persistencia**
+```
+Responsabilidad: Guardar decisiones
+Tools:
+  - MCP Neon: INSERT/UPDATE
+  - Logging: Audit trail
+```
+
+**Sub-agente Justificador**
+```
+Responsabilidad: Generar explicaciones
+Tools:
+  - Claude API: LLM calls
+  - Templates: Prompt templates
+```
+
+### 9.5 Flujo con MCPs
+
+```
+1. USER REQUEST
+   │
+   ▼
+2. AGENT ORCHESTRATOR
+   │
+   ├─ MCP Neon.get_schema() → Validar datos
+   │
+   ├─ Sub-agente Contexto (usando MCP Neon)
+   │  └─ Capturar user input
+   │
+   ├─ MCP n8n.get_workflow_schema("recommend-books")
+   │  └─ Validar estructura de contexto
+   │
+   ├─ MCP n8n.execute_workflow("recommend-books", context)
+   │  └─ Ejecuta flujo: analiza, consulta BD, decide, justifica
+   │
+   ├─ Sub-agente Persistencia (usando MCP Neon)
+   │  └─ INSERT recomendaciones + metadata
+   │
+   ▼
+3. RESPONSE TO USER
+```
+
+### 9.6 Configuración de MCPs
+
+**Environment Variables:**
+```env
+# Neon MCP
+NEON_DATABASE_URL=postgresql://...
+NEON_API_KEY=...
+NEON_PROJECT_ID=...
+
+# n8n MCP
+N8N_URL=https://n8n.example.com
+N8N_API_KEY=...
+N8N_WEBHOOK_PATH=/webhook
+
+# Agentes
+AGENT_ORCHESTRATOR_MODEL=claude-opus-4-6
+AGENT_CONTEXT_MODEL=claude-haiku-4-5
+```
+
+**MCP Server Config (claude_desktop_config.json):**
+```json
+{
+  "mcpServers": {
+    "neon": {
+      "command": "node",
+      "args": ["./node_modules/@anthropic-sdk/mcp-servers/neon.js"],
+      "env": {
+        "NEON_API_KEY": "${NEON_API_KEY}"
+      }
+    },
+    "n8n": {
+      "command": "node",
+      "args": ["./mcp-n8n/dist/index.js"],
+      "env": {
+        "N8N_URL": "${N8N_URL}",
+        "N8N_API_KEY": "${N8N_API_KEY}"
+      }
+    }
+  }
+}
+```
+
+---
+
 ## 10. Setup Paso a Paso
 
 ### 10.1 Proyecto Next.js
