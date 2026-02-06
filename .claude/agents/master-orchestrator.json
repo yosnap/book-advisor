@@ -1,0 +1,181 @@
+{
+  "orchestrator": {
+    "name": "Master Orchestrator - book-advisor",
+    "version": "1.0.0",
+    "description": "Master orchestrator for context-engineering multi-agent system implementing book recommendations",
+    "architecture": "agent_teams",
+    "standardsVersion": "claude-opus-4-6",
+    "capabilities": [
+      "autonomous_coordination",
+      "parallel_execution",
+      "context_management",
+      "planning_and_tool_use",
+      "effort_controls"
+    ]
+  },
+
+  "agentTeams": {
+    "businessLogic": {
+      "name": "Business Logic Agents",
+      "path": "./business-logic",
+      "description": "Agents responsible for core recommendation engine",
+      "parallel": true,
+      "effort": "high",
+      "agents": [
+        "orchestrator",
+        "context-agent",
+        "search-agent",
+        "scoring-agent",
+        "justifier-agent",
+        "persistence-agent"
+      ]
+    },
+
+    "developmentTeam": {
+      "name": "Development Agents",
+      "path": "./development",
+      "description": "Agents managing entire development lifecycle",
+      "parallel": true,
+      "effort": "medium",
+      "agents": [
+        "backend-agent",
+        "database-agent",
+        "ui-agent",
+        "testing-agent",
+        "devops-agent",
+        "security-agent",
+        "docs-agent",
+        "code-review-agent"
+      ]
+    }
+  },
+
+  "executionStrategy": {
+    "description": "How agent teams execute together",
+    "pattern": "orchestrated_parallel",
+    "phases": [
+      {
+        "phase": "planning",
+        "description": "Orchestrator receives task and plans execution",
+        "effort": "medium",
+        "steps": [
+          "Parse input requirements",
+          "Identify dependencies",
+          "Plan parallel execution paths",
+          "Allocate resources"
+        ]
+      },
+      {
+        "phase": "parallelExecution",
+        "description": "Independent agents execute in parallel",
+        "effort": "high",
+        "parallelism": "max",
+        "coordination": "event_driven"
+      },
+      {
+        "phase": "aggregation",
+        "description": "Collect results from all agents",
+        "effort": "medium",
+        "contextCompaction": true
+      },
+      {
+        "phase": "persistence",
+        "description": "Save final results",
+        "effort": "low",
+        "criticalPath": true
+      }
+    ]
+  },
+
+  "contextManagement": {
+    "strategy": "compaction",
+    "compactionRules": {
+      "triggerOn": {
+        "contextUsage": 0.75,
+        "tokensUsed": 150000,
+        "elapsedMinutes": 30
+      },
+      "preserveFields": [
+        "current_state",
+        "user_context",
+        "results",
+        "error_log"
+      ]
+    }
+  },
+
+  "toolAvailability": {
+    "mcps": [
+      {
+        "name": "Neon MCP",
+        "tools": ["query", "beginTransaction", "commit", "rollback", "getSchema"],
+        "timeout": 10000
+      },
+      {
+        "name": "n8n Workflows MCP",
+        "tools": ["execute_workflow", "list_workflows", "get_workflow_schema", "poll_result"],
+        "timeout": 30000
+      }
+    ]
+  },
+
+  "effortLevels": {
+    "low": {
+      "model": "claude-haiku-4-5",
+      "useCase": "documentation, simple validation"
+    },
+    "medium": {
+      "model": "claude-sonnet-4-5-20250929",
+      "useCase": "business logic, APIs, design"
+    },
+    "high": {
+      "model": "claude-opus-4-6",
+      "useCase": "complex decisions, architecture"
+    }
+  },
+
+  "autonomousCoordination": {
+    "enabled": true,
+    "patterns": [
+      "event_driven_handoff",
+      "dependency_resolution",
+      "error_recovery"
+    ],
+    "errorRecovery": {
+      "strategy": "exponential_backoff_with_cascade",
+      "fallbacks": {
+        "context_agent_fails": "return_default_context",
+        "search_agent_fails": "use_cached_results",
+        "scoring_agent_fails": "use_uniform_scoring",
+        "justifier_agent_fails": "use_template_justifications",
+        "persistence_agent_fails": "async_retry_with_logging"
+      }
+    }
+  },
+
+  "monitoring": {
+    "metrics": [
+      "agent_execution_time",
+      "agent_error_rate",
+      "parallel_efficiency",
+      "token_usage_per_agent",
+      "cost_per_execution"
+    ],
+    "logging": {
+      "level": "debug",
+      "destinations": ["stdout", "file"]
+    }
+  },
+
+  "deployment": {
+    "environment": "development",
+    "branch": "agents",
+    "phase": "implementation",
+    "readiness": {
+      "documentationComplete": true,
+      "agentSpecsComplete": false,
+      "agentConfigsComplete": false,
+      "codingPhaseReady": false
+    }
+  }
+}

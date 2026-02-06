@@ -1,0 +1,261 @@
+{
+  "agent": {
+    "name": "Orchestrator Agent",
+    "id": "orchestrator",
+    "version": "1.0.0",
+    "description": "Master coordinator for recommendation engine workflow",
+    "type": "orchestration",
+    "complexity": "high"
+  },
+
+  "role": "Coordinate all subagents and manage workflow",
+
+  "responsibilities": [
+    "Receive and parse user context",
+    "Delegate to specialized agents",
+    "Aggregate results from parallel tasks",
+    "Manage error cascades and fallbacks",
+    "Ensure data consistency",
+    "Log decisions and metrics",
+    "Handle timeouts and retries"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "required": ["userId", "context"],
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique user identifier"
+        },
+        "context": {
+          "type": "object",
+          "required": ["mood", "profile", "interests", "intent"],
+          "properties": {
+            "mood": {
+              "type": "string",
+              "enum": ["feliz", "triste", "reflexivo", "ansioso", "neutral"]
+            },
+            "profile": {
+              "type": "string",
+              "enum": ["novato", "intermedio", "avanzado", "experto"]
+            },
+            "interests": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "intent": {
+              "type": "string",
+              "enum": ["relax", "aprendizaje", "evasión"]
+            }
+          }
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Optional request tracking ID"
+        }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "recommendationId": { "type": "string", "format": "uuid" },
+        "books": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "bookId": { "type": "string" },
+              "title": { "type": "string" },
+              "author": { "type": "string" },
+              "score": { "type": "number", "minimum": 0, "maximum": 1 },
+              "justification": { "type": "string" }
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "totalScore": { "type": "number" },
+            "processingTime": { "type": "number" },
+            "agentsUsed": { "type": "array", "items": { "type": "string" } },
+            "errors": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  },
+
+  "dependencies": [
+    "context-agent",
+    "search-agent",
+    "scoring-agent",
+    "justifier-agent",
+    "persistence-agent"
+  ],
+
+  "executionPlan": {
+    "sequential": false,
+    "parallel": true,
+    "steps": [
+      {
+        "step": 1,
+        "name": "Validate Input",
+        "agent": "orchestrator",
+        "timeout": 2000,
+        "blocking": true
+      },
+      {
+        "step": 2,
+        "name": "Enrich Context",
+        "agent": "context-agent",
+        "timeout": 5000,
+        "blocking": true,
+        "retryPolicy": {
+          "maxAttempts": 3,
+          "backoffMs": [100, 500, 1000]
+        }
+      },
+      {
+        "step": 3,
+        "name": "Search Candidates",
+        "agent": "search-agent",
+        "timeout": 10000,
+        "blocking": false,
+        "parallel": true,
+        "dependsOn": ["step-2"]
+      },
+      {
+        "step": 4,
+        "name": "Score Results",
+        "agent": "scoring-agent",
+        "timeout": 10000,
+        "blocking": false,
+        "parallel": true,
+        "dependsOn": ["step-3"]
+      },
+      {
+        "step": 5,
+        "name": "Generate Justifications",
+        "agent": "justifier-agent",
+        "timeout": 15000,
+        "blocking": false,
+        "parallel": true,
+        "dependsOn": ["step-4"]
+      },
+      {
+        "step": 6,
+        "name": "Persist Results",
+        "agent": "persistence-agent",
+        "timeout": 5000,
+        "blocking": true,
+        "dependsOn": ["step-5"],
+        "criticalPath": true,
+        "failurePolicy": "async_retry"
+      },
+      {
+        "step": 7,
+        "name": "Aggregate and Return",
+        "agent": "orchestrator",
+        "timeout": 2000,
+        "blocking": true,
+        "dependsOn": ["step-6"]
+      }
+    ]
+  },
+
+  "tools": [
+    "orchestration_engine",
+    "error_handler",
+    "context_store",
+    "metrics_collector",
+    "neon_mcp",
+    "n8n_mcp"
+  ],
+
+  "errorHandling": {
+    "strategy": "exponential_backoff_with_cascade",
+    "errors": {
+      "INPUT_VALIDATION_ERROR": {
+        "handling": "return 400 to client",
+        "retry": false,
+        "logging": "error"
+      },
+      "CONTEXT_ENRICHMENT_ERROR": {
+        "handling": "use default context",
+        "retry": true,
+        "maxRetries": 3,
+        "logging": "warning"
+      },
+      "SEARCH_ERROR": {
+        "handling": "use cached results or empty",
+        "retry": true,
+        "maxRetries": 2,
+        "logging": "warning"
+      },
+      "SCORING_ERROR": {
+        "handling": "use uniform scoring",
+        "retry": false,
+        "logging": "warning"
+      },
+      "JUSTIFICATION_ERROR": {
+        "handling": "use templated justifications",
+        "retry": false,
+        "logging": "warning"
+      },
+      "PERSISTENCE_ERROR": {
+        "handling": "return result + async retry",
+        "retry": true,
+        "maxRetries": 3,
+        "logging": "error"
+      }
+    }
+  },
+
+  "performance": {
+    "maxExecutionTime": 60000,
+    "targetResponseTime": 5000,
+    "p95ResponseTime": 8000,
+    "parallelEfficiency": 0.8,
+    "caching": {
+      "enabled": true,
+      "ttl": 3600,
+      "keys": ["user_profile", "book_catalog"]
+    }
+  },
+
+  "monitoring": {
+    "metrics": [
+      "total_requests",
+      "successful_requests",
+      "failed_requests",
+      "average_response_time",
+      "p95_response_time",
+      "agent_performance_breakdown",
+      "error_rate_by_step"
+    ],
+    "alerts": [
+      {
+        "metric": "error_rate",
+        "threshold": 0.05,
+        "action": "notify"
+      },
+      {
+        "metric": "response_time_p95",
+        "threshold": 10000,
+        "action": "log_warning"
+      }
+    ]
+  },
+
+  "effort": "high",
+  "model": "claude-opus-4-6",
+  "contextCompaction": true,
+  "maxContextLength": 200000
+}
