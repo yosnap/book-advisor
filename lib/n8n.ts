@@ -3,6 +3,24 @@ import { Context } from './validation'
 const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL!
 const N8N_TIMEOUT = 30_000
 
+export interface BookCandidate {
+  bookId: string
+  title: string
+  author: string
+  genre: string
+  synopsis: string
+  difficulty: string | null
+  publicationYear: number | null
+  tags: string[]
+  score: number
+  scoreBreakdown: {
+    interestMatch: number
+    difficultyMatch: number
+    moodMatch: number
+  }
+  keyReasons: string[]
+}
+
 export interface N8nRecommendation {
   rank: number
   bookId: string
@@ -11,12 +29,12 @@ export interface N8nRecommendation {
   genre: string
   matchScore: number
   justification: string
+  keyReasons: string[]
   reasoning: {
     mood_match: number
     genre_match: number
     intention_match: number
     reader_level_match?: number
-    recency_penalty?: number
   }
 }
 
@@ -25,10 +43,16 @@ export interface N8nResponse {
   recommendations: N8nRecommendation[]
 }
 
+/**
+ * Call n8n webhook with pre-scored book candidates.
+ * The n8n workflow uses Haiku to generate professional,
+ * book-specific justifications for each candidate.
+ */
 export async function callN8nRecommendation(
   contextId: string,
   userId: string,
-  context: Context
+  context: Context,
+  candidates?: BookCandidate[]
 ): Promise<N8nResponse> {
   const payload = {
     contextId,
@@ -37,6 +61,8 @@ export async function callN8nRecommendation(
     readerType: context.profile,
     favoriteGenres: context.interests,
     intention: context.intent,
+    // Send pre-scored candidates for Haiku to justify
+    candidates: candidates || [],
   }
 
   const controller = new AbortController()

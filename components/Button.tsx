@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface ButtonProps {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger'
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
   isLoading?: boolean
@@ -21,19 +21,20 @@ export default function Button({
   className = '',
   type = 'button',
 }: ButtonProps) {
-  const baseStyles = 'font-semibold rounded-md transition-all duration-200'
+  const baseStyles = 'font-secondary font-semibold rounded-md transition-all duration-200'
 
   const variantStyles = {
-    primary: 'bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800',
-    secondary: 'bg-purple-600 text-white hover:bg-purple-700 active:bg-purple-800',
-    ghost: 'bg-transparent border border-gray-300 text-gray-900 hover:bg-gray-100',
-    danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800',
+    primary: 'bg-(--primary) text-white hover:opacity-90 active:opacity-80',
+    secondary: 'bg-(--secondary) text-(--secondary-foreground) hover:opacity-90 active:opacity-80',
+    ghost: 'border border-(--primary) text-(--primary) bg-transparent hover:bg-(--primary) hover:text-white',
+    outline: 'border border-(--border) text-(--foreground) bg-transparent hover:bg-(--surface)',
+    danger: 'bg-(--danger) text-white hover:opacity-90 active:opacity-80',
   }
 
   const sizeStyles = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
+    sm: 'px-4 py-1.5 text-sm',
+    md: 'px-6 py-3 text-sm',
+    lg: 'px-8 py-3 text-base',
   }
 
   const disabledStyles = disabled || isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'

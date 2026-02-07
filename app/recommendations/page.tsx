@@ -1,12 +1,14 @@
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { ArrowLeft, Heart, Sparkles } from 'lucide-react';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Badge from '@/components/Badge';
+import BookCover from '@/components/BookCover';
 
-interface Book {
+interface BookData {
   id: string;
   title: string;
   author: string;
@@ -19,9 +21,10 @@ interface Book {
 
 interface Recommendation {
   rank: number;
-  book: Book;
+  book: BookData;
   matchScore: number;
   justification: string;
+  keyReasons?: string[];
   scoreBreakdown?: {
     interestMatch: number;
     difficultyMatch: number;
@@ -30,6 +33,21 @@ interface Recommendation {
 }
 
 export default function RecommendationsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-(--background) flex items-center justify-center">
+        <svg className="animate-spin h-12 w-12 text-(--primary)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+      </div>
+    }>
+      <RecommendationsContent />
+    </Suspense>
+  );
+}
+
+function RecommendationsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -53,7 +71,6 @@ export default function RecommendationsPage() {
           favoriteGenres,
         });
 
-        // Create request payload
         const payload = {
           context: {
             mood,
@@ -63,12 +80,9 @@ export default function RecommendationsPage() {
           },
         };
 
-        // Fetch recommendations from API
         const response = await fetch('/api/v1/recommendations', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
 
@@ -93,6 +107,7 @@ export default function RecommendationsPage() {
             },
             matchScore: book.score || book.matchScore || 0,
             justification: book.justification || 'Este libro coincide con tus preferencias',
+            keyReasons: book.keyReasons || [],
             scoreBreakdown: book.scoreBreakdown,
           }));
           setRecommendations(formattedRecommendations);
@@ -108,176 +123,191 @@ export default function RecommendationsPage() {
     fetchRecommendations();
   }, [searchParams]);
 
-  const getScoreColor = (score: number) => {
-    if (score >= 0.9) return 'text-green-600';
-    if (score >= 0.75) return 'text-yellow-600';
-    return 'text-orange-600';
-  };
-
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <Button
-            variant="secondary"
+    <div className="min-h-screen bg-(--background)">
+      {/* Results Header */}
+      <div className="bg-(--surface) py-10 px-6 lg:px-12">
+        <div className="max-w-4xl mx-auto">
+          <button
             onClick={() => router.push('/')}
-            className="mb-4"
+            className="flex items-center gap-2 text-(--primary) text-sm font-medium mb-6 hover:opacity-80 transition-opacity"
           >
-            ← Volver
-          </Button>
+            <ArrowLeft className="w-5 h-5" />
+            Volver
+          </button>
 
-          <h1 className="font-primary font-bold text-4xl text-gray-900 mb-4">
+          <h1 className="font-primary font-bold text-[32px] text-(--foreground) mb-4">
             Tus recomendaciones personalizadas
           </h1>
 
-          {context && (
-            <div className="flex flex-wrap gap-2 mb-4">
+          <p className="text-sm text-(--muted-foreground) max-w-2xl">
+            Basadas en tu estado actual de ánimo y preferencias de lectura, aquí están los libros que te recomendamos.
+          </p>
+        </div>
+      </div>
+
+      {/* Context Bar */}
+      {context && (
+        <div className="px-6 lg:px-12 py-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex flex-wrap items-center gap-3 bg-(--background) border border-(--border) rounded-md px-5 py-3">
               <Badge variant="primary">{context.mood}</Badge>
               <Badge variant="secondary">{context.readerType}</Badge>
               <Badge variant="success">{context.intention}</Badge>
+              {context.favoriteGenres?.map((genre: string) => (
+                <span key={genre} className="text-xs text-(--muted-foreground)">{genre}</span>
+              ))}
             </div>
-          )}
-
-          <p className="text-gray-600 max-w-2xl">
-            Basadas en tu estado actual de ánimo y preferencias de lectura, aquí están los libros que te recomendamos especialmente para ti.
-          </p>
+          </div>
         </div>
+      )}
 
-        {/* Recommendations */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <svg
-              className="animate-spin h-12 w-12 text-indigo-600"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-red-700">
-            <p className="font-semibold mb-2">Error</p>
-            <p>{error}</p>
-            <Button
-              variant="secondary"
-              onClick={() => router.push('/')}
-              className="mt-4"
-            >
-              Intentar de nuevo
-            </Button>
-          </div>
-        ) : recommendations.length > 0 ? (
-          <div className="space-y-6">
-            {recommendations.map((rec) => (
-              <Card key={rec.book.id} className="p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-4 mb-2">
-                      <Badge variant="primary">#{rec.rank}</Badge>
-                      <span className={`text-3xl font-bold ${getScoreColor(rec.matchScore)}`}>
-                        {Math.round(rec.matchScore * 100)}%
-                      </span>
-                    </div>
+      {/* Recommendations */}
+      <div className="px-6 lg:px-12 py-10">
+        <div className="max-w-4xl mx-auto">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <svg
+                className="animate-spin h-12 w-12 text-(--primary)"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-red-700">
+              <p className="font-semibold mb-2">Error</p>
+              <p>{error}</p>
+              <Button variant="outline" onClick={() => router.push('/')} className="mt-4">
+                Intentar de nuevo
+              </Button>
+            </div>
+          ) : recommendations.length > 0 ? (
+            <div className="space-y-8">
+              {recommendations.map((rec) => (
+                <div key={rec.book.id}>
+                  {/* Book label */}
+                  <p className="text-sm font-bold tracking-wider text-(--primary) mb-3">
+                    LIBRO {rec.rank}
+                  </p>
 
-                    <h2 className="font-primary font-bold text-2xl text-gray-900 mb-2">
-                      {rec.book.title}
-                    </h2>
+                  <Card className="p-6">
+                    <div className="flex gap-6">
+                      {/* Book cover */}
+                      <BookCover
+                        title={rec.book.title}
+                        author={rec.book.author}
+                        className="w-30 h-45 shrink-0"
+                      />
 
-                    <p className="text-gray-600 mb-3">
-                      por <span className="font-semibold">{rec.book.author}</span>
-                    </p>
+                      {/* Book info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <h2 className="font-primary font-semibold text-base text-(--foreground) leading-tight">
+                            {rec.book.title}
+                          </h2>
+                          <Badge variant="score">
+                            {Math.round(rec.matchScore * 100)}%
+                          </Badge>
+                        </div>
 
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <Badge variant="primary">{rec.book.genre}</Badge>
-                      {rec.book.publicationYear && (
-                        <Badge variant="secondary">{rec.book.publicationYear}</Badge>
-                      )}
-                      {rec.book.difficulty && (
-                        <Badge variant="success">Nivel: {rec.book.difficulty}</Badge>
-                      )}
-                    </div>
+                        <p className="text-[13px] text-(--muted-foreground) mb-3">
+                          por <span className="font-medium text-(--foreground)">{rec.book.author}</span>
+                        </p>
 
-                    {rec.book.synopsis && (
-                      <p className="text-gray-700 mb-4 line-clamp-3">
-                        {rec.book.synopsis}
-                      </p>
-                    )}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <Badge variant="primary">{rec.book.genre}</Badge>
+                          {rec.book.publicationYear && (
+                            <Badge variant="secondary">{rec.book.publicationYear}</Badge>
+                          )}
+                          {rec.book.difficulty && (
+                            <Badge variant="success">Nivel: {rec.book.difficulty}</Badge>
+                          )}
+                        </div>
 
-                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
-                      <p className="text-sm font-semibold text-indigo-900 mb-2">
-                        Por qué te recomendamos este libro:
-                      </p>
-                      <p className="text-indigo-800">
-                        {rec.justification}
-                      </p>
-                    </div>
+                        {rec.book.synopsis && (
+                          <p className="text-[13px] text-(--muted-foreground) leading-relaxed mb-4 line-clamp-3">
+                            {rec.book.synopsis}
+                          </p>
+                        )}
 
-                    {rec.scoreBreakdown && (
-                      <div className="bg-gray-50 rounded-lg p-3 mb-4 text-sm">
-                        <p className="font-semibold text-gray-700 mb-2">Desglose de puntuación:</p>
-                        <div className="grid grid-cols-3 gap-3">
-                          <div>
-                            <p className="text-gray-600">Intereses</p>
-                            <p className="font-bold text-gray-900">
-                              {Math.round(rec.scoreBreakdown.interestMatch * 100)}%
-                            </p>
+                        {/* Justification */}
+                        <div className="bg-(--surface) rounded-md p-3 mb-4">
+                          <p className="text-xs font-medium text-(--foreground) mb-2 flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-(--primary)" />
+                            Por qué te lo recomendamos
+                          </p>
+                          <p className="text-xs text-(--muted-foreground) leading-relaxed">
+                            {rec.justification}
+                          </p>
+                          {rec.keyReasons && rec.keyReasons.length > 0 && (
+                            <ul className="mt-2 space-y-1">
+                              {rec.keyReasons.map((reason: string, i: number) => (
+                                <li key={i} className="text-xs text-(--muted-foreground) flex items-start gap-1.5">
+                                  <span className="text-(--primary) mt-0.5 shrink-0">•</span>
+                                  {reason}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+
+                        {rec.scoreBreakdown && (
+                          <div className="bg-(--surface) rounded-md p-3 mb-4">
+                            <p className="text-xs font-medium text-(--foreground) mb-2">Desglose de puntuación</p>
+                            <div className="grid grid-cols-3 gap-3">
+                              <div>
+                                <p className="text-xs text-(--muted-foreground)">Intereses</p>
+                                <p className="text-sm font-bold text-(--foreground)">
+                                  {Math.round(rec.scoreBreakdown.interestMatch * 100)}%
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-(--muted-foreground)">Dificultad</p>
+                                <p className="text-sm font-bold text-(--foreground)">
+                                  {Math.round(rec.scoreBreakdown.difficultyMatch * 100)}%
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-(--muted-foreground)">Estado anímico</p>
+                                <p className="text-sm font-bold text-(--foreground)">
+                                  {Math.round(rec.scoreBreakdown.moodMatch * 100)}%
+                                </p>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-gray-600">Dificultad</p>
-                            <p className="font-bold text-gray-900">
-                              {Math.round(rec.scoreBreakdown.difficultyMatch * 100)}%
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Estado anímico</p>
-                            <p className="font-bold text-gray-900">
-                              {Math.round(rec.scoreBreakdown.moodMatch * 100)}%
-                            </p>
-                          </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-4 pt-3 border-t border-(--border)">
+                          <a href="#" className="text-[13px] font-medium text-(--primary) hover:opacity-80">
+                            Ver detalles
+                          </a>
+                          <button className="flex items-center gap-1.5 border border-(--border) rounded-md px-2.5 py-1.5 text-xs text-(--foreground) hover:bg-(--surface) transition-colors">
+                            <Heart className="w-3.5 h-3.5" />
+                            Guardar
+                          </button>
                         </div>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  </Card>
                 </div>
-
-                <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
-                  <Button variant="primary" size="sm">
-                    Ver más información
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Guardar para después
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    Compartir
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-600 text-lg mb-6">
-              No encontramos recomendaciones que se ajusten a tus criterios.
-            </p>
-            <Button variant="primary" onClick={() => router.push('/')}>
-              Probar con otros criterios
-            </Button>
-          </div>
-        )}
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-(--muted-foreground) text-lg mb-6">
+                No encontramos recomendaciones que se ajusten a tus criterios.
+              </p>
+              <Button variant="primary" onClick={() => router.push('/')}>
+                Probar con otros criterios
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

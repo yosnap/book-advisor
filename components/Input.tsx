@@ -28,9 +28,9 @@ export default function Input({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-(--foreground) mb-2">
           {label}
-          {required && <span className="text-red-600">*</span>}
+          {required && <span className="text-(--danger) ml-1">*</span>}
         </label>
       )}
       <input
@@ -42,11 +42,15 @@ export default function Input({
         disabled={disabled}
         required={required}
         aria-invalid={!!error}
-        className={`w-full px-4 py-2 rounded-md border ${
-          error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500'
-        } focus:ring-1 focus:border-transparent transition-colors ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'} ${className}`}
+        className={`w-full h-11 px-4 py-3 rounded-md border ${
+          error
+            ? 'border-(--danger) focus:ring-(--danger)'
+            : 'border-(--border) focus:ring-(--primary)'
+        } bg-(--background) text-(--foreground) placeholder:text-(--muted-foreground) focus:ring-1 focus:border-transparent transition-colors ${
+          disabled ? 'bg-(--muted) cursor-not-allowed' : ''
+        } ${className}`}
       />
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-(--danger)">{error}</p>}
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -12,7 +12,7 @@ export async function GET(
     const recommendation = await prisma.recommendation.findUnique({
       where: { id },
       include: {
-        recommendationBooks: {
+        books: {
           include: {
             book: true,
           },
@@ -34,7 +34,7 @@ export async function GET(
     }
 
     // Format response
-    const formattedBooks = recommendation.recommendationBooks.map((rec) => ({
+    const formattedBooks = recommendation.books.map((rec) => ({
       id: rec.book.id,
       title: rec.book.title,
       author: rec.book.author,

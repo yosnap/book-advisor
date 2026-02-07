@@ -6,9 +6,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const validated = RecommendationRequestSchema.parse(body)
+    const userId = validated.userId || crypto.randomUUID()
 
     const context = await prisma.readerContext.upsert({
-      where: { userId: validated.userId },
+      where: { userId },
       update: {
         mood: validated.context.mood,
         readerProfile: validated.context.profile,
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
         lastAccessedAt: new Date(),
       },
       create: {
-        userId: validated.userId,
+        userId,
         mood: validated.context.mood,
         readerProfile: validated.context.profile,
         interests: validated.context.interests,

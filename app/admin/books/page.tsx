@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { List, LayoutGrid, Star } from 'lucide-react';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import Card from '@/components/Card';
 import Badge from '@/components/Badge';
+import BookCover from '@/components/BookCover';
 
 interface Book {
   id: string;
@@ -93,32 +95,32 @@ export default function BooksPage() {
   };
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-(--surface) py-8 px-6 lg:px-12">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="font-primary font-bold text-4xl text-gray-900">
+          <h1 className="font-primary font-bold text-[32px] text-(--foreground)">
             Gestión de libros
           </h1>
           <div className="flex gap-4">
-            <div className="flex gap-2 bg-gray-200 p-1 rounded-lg">
+            <div className="flex gap-1 bg-(--secondary) p-1 rounded-lg">
               <button
                 onClick={() => setViewMode('list')}
-                className={`px-3 py-2 rounded transition-colors ${
-                  viewMode === 'list' ? 'bg-white shadow-sm' : 'text-gray-600'
+                className={`px-3 py-2 rounded transition-colors text-sm ${
+                  viewMode === 'list' ? 'bg-(--card) shadow-sm text-(--foreground)' : 'text-(--muted-foreground)'
                 }`}
                 title="Vista de lista"
               >
-                ☰
+                <List className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`px-3 py-2 rounded transition-colors ${
-                  viewMode === 'grid' ? 'bg-white shadow-sm' : 'text-gray-600'
+                className={`px-3 py-2 rounded transition-colors text-sm ${
+                  viewMode === 'grid' ? 'bg-(--card) shadow-sm text-(--foreground)' : 'text-(--muted-foreground)'
                 }`}
                 title="Vista de rejilla"
               >
-                ⊞
+                <LayoutGrid className="w-4 h-4" />
               </button>
             </div>
             <Button variant="primary" onClick={() => setIsModalOpen(true)}>
@@ -137,7 +139,7 @@ export default function BooksPage() {
           <select
             value={selectedGenre}
             onChange={(e) => setSelectedGenre(e.target.value)}
-            className="px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="h-11 px-4 py-3 rounded-md border border-(--border) bg-(--background) text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--primary)"
           >
             <option value="">Todos los géneros</option>
             {genres.map((genre) => (
@@ -153,13 +155,22 @@ export default function BooksPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredBooks.map((book) => (
               <Card key={book.id} className="p-6 flex flex-col">
-                <h3 className="font-primary font-bold text-lg text-gray-900 mb-2">
+                <BookCover
+                  title={book.title}
+                  author={book.author}
+                  className="w-full h-48 mb-4"
+                />
+                <h3 className="font-primary font-bold text-lg text-(--foreground) mb-2">
                   {book.title}
                 </h3>
-                <p className="text-gray-600 mb-3">{book.author}</p>
+                <p className="text-sm text-(--muted-foreground) mb-3">{book.author}</p>
                 <div className="flex items-center justify-between mb-3">
                   <Badge variant="primary">{book.genre}</Badge>
-                  {book.rating && <span className="text-yellow-500">★ {book.rating}</span>}
+                  {book.rating !== undefined && book.rating > 0 && (
+                    <span className="text-(--warning) text-sm flex items-center gap-1">
+                      <Star className="w-3.5 h-3.5 fill-current" /> {book.rating}
+                    </span>
+                  )}
                 </div>
                 {book.difficulty && (
                   <Badge variant="secondary" className="mb-4 w-fit">
@@ -188,15 +199,19 @@ export default function BooksPage() {
               <Card key={book.id} className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <h3 className="font-primary font-bold text-lg text-gray-900">
+                    <h3 className="font-primary font-bold text-lg text-(--foreground)">
                       {book.title}
                     </h3>
-                    <p className="text-gray-600">{book.author}</p>
+                    <p className="text-sm text-(--muted-foreground)">{book.author}</p>
                   </div>
                   <Badge variant="primary" className="mx-4">
                     {book.genre}
                   </Badge>
-                  {book.rating && <span className="text-yellow-500 mx-4">★ {book.rating}</span>}
+                  {book.rating !== undefined && book.rating > 0 && (
+                    <span className="text-(--warning) mx-4 text-sm flex items-center gap-1">
+                      <Star className="w-3.5 h-3.5 fill-current" /> {book.rating}
+                    </span>
+                  )}
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm">
                       Editar
@@ -217,15 +232,15 @@ export default function BooksPage() {
 
         {filteredBooks.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">No hay libros que coincidan con tu búsqueda.</p>
+            <p className="text-(--muted-foreground) text-lg">No hay libros que coincidan con tu búsqueda.</p>
           </div>
         )}
 
         {/* Add Book Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-2xl p-6">
-              <h2 className="font-primary font-bold text-2xl text-gray-900 mb-6">
+              <h2 className="font-primary font-bold text-2xl text-(--foreground) mb-6">
                 Añadir nuevo libro
               </h2>
               <form className="space-y-4">
@@ -246,7 +261,7 @@ export default function BooksPage() {
                 <select
                   value={formData.genre}
                   onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-                  className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full h-11 px-4 py-3 rounded-md border border-(--border) bg-(--background) text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--primary)"
                 >
                   <option value="">Selecciona un género</option>
                   {genres.map((genre) => (
@@ -258,21 +273,21 @@ export default function BooksPage() {
                 <select
                   value={formData.difficulty}
                   onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                  className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full h-11 px-4 py-3 rounded-md border border-(--border) bg-(--background) text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--primary)"
                 >
                   <option value="beginner">Principiante</option>
                   <option value="intermediate">Intermedio</option>
                   <option value="advanced">Avanzado</option>
                 </select>
                 <textarea
-                  className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-3 rounded-md border border-(--border) bg-(--background) text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--primary)"
                   placeholder="Sinopsis (opcional)"
                   rows={3}
                   value={formData.synopsis}
                   onChange={(e) => setFormData({ ...formData, synopsis: e.target.value })}
                 />
               </form>
-              <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
+              <div className="flex gap-3 mt-6 pt-6 border-t border-(--border)">
                 <Button
                   variant="outline"
                   className="flex-1"
