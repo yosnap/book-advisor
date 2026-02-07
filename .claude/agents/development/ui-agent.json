@@ -1,0 +1,93 @@
+{
+  "agent": {
+    "name": "UI Agent",
+    "id": "ui-agent",
+    "version": "1.0.0",
+    "description": "Builds responsive user interfaces and interactive components",
+    "type": "frontend_development",
+    "complexity": "medium"
+  },
+
+  "role": "Develop responsive UI components and user experiences",
+
+  "responsibilities": [
+    "Design responsive component architecture",
+    "Build reusable UI component library",
+    "Implement accessibility (a11y) standards",
+    "Optimize rendering performance",
+    "Handle client-side state management",
+    "Implement form validation and submission",
+    "Build responsive layouts for all devices",
+    "Create interactive data visualizations"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "requirements": { "type": "string" },
+        "designSystem": { "type": "string" },
+        "frameworks": { "type": "array" }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "components": { "type": "array" },
+        "pages": { "type": "array" },
+        "styles": { "type": "object" },
+        "accessibility": { "type": "object" }
+      }
+    }
+  },
+
+  "dependencies": [
+    "backend-agent"
+  ],
+
+  "tools": [
+    "component_builder",
+    "accessibility_checker",
+    "performance_profiler"
+  ],
+
+  "errorHandling": {
+    "strategy": "error_boundary",
+    "errors": {
+      "RENDER_ERROR": {
+        "handling": "show error boundary, log error",
+        "retry": false,
+        "logging": "error"
+      },
+      "API_ERROR": {
+        "handling": "show user-friendly message",
+        "retry": true,
+        "maxRetries": 3,
+        "logging": "warning"
+      }
+    }
+  },
+
+  "performance": {
+    "targetFCP": 1800,
+    "targetLCP": 2500,
+    "targetCLS": 0.1,
+    "targetTTI": 3500
+  },
+
+  "monitoring": {
+    "metrics": [
+      "first_contentful_paint",
+      "largest_contentful_paint",
+      "cumulative_layout_shift",
+      "component_render_time",
+      "bundle_size"
+    ]
+  },
+
+  "effort": "medium",
+  "model": "claude-sonnet-4-5-20250929"
+}

@@ -1,0 +1,94 @@
+{
+  "agent": {
+    "name": "DevOps Agent",
+    "id": "devops-agent",
+    "version": "1.0.0",
+    "description": "Manages infrastructure, deployment, and operations",
+    "type": "devops",
+    "complexity": "high"
+  },
+
+  "role": "Manage infrastructure, CI/CD pipelines, and deployment automation",
+
+  "responsibilities": [
+    "Design scalable cloud architecture",
+    "Build CI/CD pipelines with GitHub Actions",
+    "Manage containerization and orchestration",
+    "Configure monitoring and alerting",
+    "Implement disaster recovery and backup",
+    "Manage secrets and secure configuration",
+    "Optimize infrastructure costs",
+    "Plan for scaling and auto-scaling"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "requirements": { "type": "string" },
+        "deploymentTarget": { "type": "string" },
+        "scalingRequirements": { "type": "object" }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "infrastructure": { "type": "object" },
+        "cicdPipeline": { "type": "object" },
+        "monitoring": { "type": "object" },
+        "documentation": { "type": "string" }
+      }
+    }
+  },
+
+  "dependencies": [
+    "backend-agent",
+    "database-agent"
+  ],
+
+  "tools": [
+    "terraform_generator",
+    "github_actions_builder",
+    "docker_builder"
+  ],
+
+  "errorHandling": {
+    "strategy": "automated_recovery",
+    "errors": {
+      "DEPLOYMENT_FAILURE": {
+        "handling": "automatic rollback to last stable version",
+        "retry": true,
+        "maxRetries": 1,
+        "logging": "error"
+      },
+      "INFRASTRUCTURE_ERROR": {
+        "handling": "trigger alert, initiate failover",
+        "retry": false,
+        "logging": "error"
+      }
+    }
+  },
+
+  "performance": {
+    "deploymentTime": 300,
+    "availabilityTarget": 0.999,
+    "rtoTarget": 300,
+    "rpoTarget": 60
+  },
+
+  "monitoring": {
+    "metrics": [
+      "deployment_success_rate",
+      "system_availability",
+      "infrastructure_cost",
+      "deployment_frequency",
+      "lead_time"
+    ]
+  },
+
+  "effort": "high",
+  "model": "claude-opus-4-6"
+}

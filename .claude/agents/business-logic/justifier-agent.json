@@ -1,0 +1,186 @@
+{
+  "agent": {
+    "name": "Justifier Agent",
+    "id": "justifier-agent",
+    "version": "1.0.0",
+    "description": "Generates personalized justifications for book recommendations using LLM",
+    "type": "llm_generation",
+    "complexity": "high"
+  },
+
+  "role": "Generate natural language justifications for why books match reader context",
+
+  "responsibilities": [
+    "Generate personalized justification text for each book",
+    "Highlight key matching reasons",
+    "Extract 2-3 primary reasons per book",
+    "Maintain consistency with scoring",
+    "Use reader context to personalize language",
+    "Ensure justifications are compelling and concise"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "required": ["context", "scoredBooks"],
+      "properties": {
+        "context": {
+          "type": "object",
+          "properties": {
+            "userId": { "type": "string" },
+            "mood": { "type": "string" },
+            "profile": { "type": "string" },
+            "interests": { "type": "array", "items": { "type": "string" } },
+            "intent": { "type": "string" }
+          }
+        },
+        "scoredBooks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "bookId": { "type": "string" },
+              "title": { "type": "string" },
+              "author": { "type": "string" },
+              "genre": { "type": "string" },
+              "synopsis": { "type": "string" },
+              "score": { "type": "number" },
+              "scoreBreakdown": { "type": "object" }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "justifiedBooks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "bookId": { "type": "string" },
+              "title": { "type": "string" },
+              "justification": { "type": "string" },
+              "keyReasons": { "type": "array", "items": { "type": "string" } },
+              "personalizedInsight": { "type": "string" }
+            }
+          }
+        },
+        "generationMetadata": {
+          "type": "object",
+          "properties": {
+            "totalBooks": { "type": "integer" },
+            "generationTime": { "type": "integer" },
+            "tokenUsage": { "type": "integer" }
+          }
+        }
+      }
+    }
+  },
+
+  "dependencies": [
+    "scoring-agent"
+  ],
+
+  "executionPlan": {
+    "sequential": false,
+    "parallel": true,
+    "steps": [
+      {
+        "step": 1,
+        "name": "Prepare Context Prompt",
+        "timeout": 500,
+        "description": "Build LLM prompt from reader context"
+      },
+      {
+        "step": 2,
+        "name": "Generate Justifications (Parallel)",
+        "timeout": 12000,
+        "parallel": true,
+        "description": "Call LLM for each book batch"
+      },
+      {
+        "step": 3,
+        "name": "Extract Key Reasons",
+        "timeout": 2000,
+        "description": "Parse justifications for key reasons"
+      },
+      {
+        "step": 4,
+        "name": "Add Personalization",
+        "timeout": 1000,
+        "description": "Enhance with user-specific insights"
+      },
+      {
+        "step": 5,
+        "name": "Return Results",
+        "timeout": 500,
+        "description": "Format output with all justifications"
+      }
+    ]
+  },
+
+  "tools": [
+    "anthropic_api",
+    "llm_batch_processor"
+  ],
+
+  "errorHandling": {
+    "strategy": "template_fallback",
+    "errors": {
+      "LLM_API_ERROR": {
+        "handling": "use templated justifications",
+        "retry": true,
+        "maxRetries": 2,
+        "logging": "warning"
+      },
+      "TIMEOUT": {
+        "handling": "use template for remaining books",
+        "retry": false,
+        "logging": "warning"
+      },
+      "RATE_LIMIT": {
+        "handling": "queue and retry with backoff",
+        "retry": true,
+        "maxRetries": 3,
+        "logging": "warning"
+      },
+      "PARSING_ERROR": {
+        "handling": "use entire LLM response as justification",
+        "retry": false,
+        "logging": "warning"
+      }
+    }
+  },
+
+  "performance": {
+    "targetTime": 8000,
+    "p95Time": 12000,
+    "batchSize": 5,
+    "parallelBatches": 2
+  },
+
+  "llmConfig": {
+    "model": "claude-opus-4-6",
+    "temperature": 0.7,
+    "maxTokens": 300,
+    "systemPrompt": "You are a literary expert helping readers understand why books match their interests..."
+  },
+
+  "monitoring": {
+    "metrics": [
+      "generation_time",
+      "token_usage",
+      "batch_success_rate",
+      "fallback_rate",
+      "justification_quality_score"
+    ]
+  },
+
+  "effort": "high",
+  "model": "claude-opus-4-6"
+}

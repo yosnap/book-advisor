@@ -1,0 +1,189 @@
+{
+  "agent": {
+    "name": "Scoring Agent",
+    "id": "scoring-agent",
+    "version": "1.0.0",
+    "description": "Calculates match scores for candidate books",
+    "type": "scoring",
+    "complexity": "high"
+  },
+
+  "role": "Calculate multi-dimensional match scores for candidate books",
+
+  "responsibilities": [
+    "Calculate mood affinity scores",
+    "Calculate profile difficulty match scores",
+    "Calculate interest/genre alignment scores",
+    "Calculate intent alignment scores",
+    "Apply weighting and normalization",
+    "Detect and penalize poor matches",
+    "Return scored books ranked by total score"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "required": ["context", "candidateBooks"],
+      "properties": {
+        "context": {
+          "type": "object",
+          "properties": {
+            "mood": { "type": "string" },
+            "profile": { "type": "string" },
+            "interests": { "type": "array", "items": { "type": "string" } },
+            "intent": { "type": "string" }
+          }
+        },
+        "candidateBooks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "bookId": { "type": "string" },
+              "title": { "type": "string" },
+              "genre": { "type": "string" },
+              "difficulty": { "type": "string" },
+              "tags": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "scoredBooks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "bookId": { "type": "string" },
+              "title": { "type": "string" },
+              "score": { "type": "number", "minimum": 0, "maximum": 1 },
+              "scoreBreakdown": {
+                "type": "object",
+                "properties": {
+                  "moodMatch": { "type": "number" },
+                  "profileMatch": { "type": "number" },
+                  "interestMatch": { "type": "number" },
+                  "intentMatch": { "type": "number" }
+                }
+              },
+              "rank": { "type": "integer" }
+            }
+          }
+        },
+        "scoringMetadata": {
+          "type": "object",
+          "properties": {
+            "totalBooks": { "type": "integer" },
+            "avgScore": { "type": "number" },
+            "scoreDistribution": { "type": "object" },
+            "scoringTime": { "type": "integer" }
+          }
+        }
+      }
+    }
+  },
+
+  "dependencies": [
+    "search-agent"
+  ],
+
+  "executionPlan": {
+    "sequential": true,
+    "steps": [
+      {
+        "step": 1,
+        "name": "Initialize Scoring Parameters",
+        "timeout": 500,
+        "description": "Set weights and thresholds"
+      },
+      {
+        "step": 2,
+        "name": "Calculate Mood Match",
+        "timeout": 2000,
+        "description": "Score each book for mood affinity"
+      },
+      {
+        "step": 3,
+        "name": "Calculate Profile Match",
+        "timeout": 1000,
+        "description": "Score difficulty alignment"
+      },
+      {
+        "step": 4,
+        "name": "Calculate Interest Match",
+        "timeout": 1000,
+        "description": "Score genre and tag matches"
+      },
+      {
+        "step": 5,
+        "name": "Calculate Intent Match",
+        "timeout": 1000,
+        "description": "Score reading goal alignment"
+      },
+      {
+        "step": 6,
+        "name": "Aggregate and Normalize",
+        "timeout": 1000,
+        "description": "Combine scores and rank"
+      }
+    ]
+  },
+
+  "tools": [
+    "scoring_engine",
+    "weighting_calculator"
+  ],
+
+  "errorHandling": {
+    "strategy": "fallback_to_uniform",
+    "errors": {
+      "CALCULATION_ERROR": {
+        "handling": "use uniform scoring (0.5 for all)",
+        "retry": false,
+        "logging": "warning"
+      },
+      "INVALID_INPUT": {
+        "handling": "skip problematic book, continue scoring",
+        "retry": false,
+        "logging": "warning"
+      },
+      "TIMEOUT": {
+        "handling": "return partially scored results",
+        "retry": false,
+        "logging": "warning"
+      }
+    }
+  },
+
+  "performance": {
+    "targetTime": 2000,
+    "p95Time": 5000,
+    "maxBooks": 100
+  },
+
+  "monitoring": {
+    "metrics": [
+      "scoring_time_per_book",
+      "avg_score",
+      "score_variance",
+      "high_scoring_percentage",
+      "low_scoring_percentage"
+    ]
+  },
+
+  "scoringWeights": {
+    "moodMatch": 0.25,
+    "profileMatch": 0.25,
+    "interestMatch": 0.35,
+    "intentMatch": 0.15
+  },
+
+  "effort": "high",
+  "model": "claude-opus-4-6"
+}

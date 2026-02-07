@@ -1,0 +1,196 @@
+{
+  "agent": {
+    "name": "Search Agent",
+    "id": "search-agent",
+    "version": "1.0.0",
+    "description": "Queries database and filters books based on reader context",
+    "type": "data_retrieval",
+    "complexity": "high"
+  },
+
+  "role": "Search and filter books from catalog based on reader context",
+
+  "responsibilities": [
+    "Query Book table with multiple filter criteria",
+    "Apply genre, difficulty, and interest-based filtering",
+    "Implement full-text search on titles and synopses",
+    "Exclude previously read books",
+    "Apply diversity filters for varied recommendations",
+    "Return ranked candidate books for scoring"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "required": ["context", "enrichment"],
+      "properties": {
+        "context": {
+          "type": "object",
+          "properties": {
+            "mood": { "type": "string" },
+            "profile": { "type": "string" },
+            "interests": { "type": "array", "items": { "type": "string" } },
+            "intent": { "type": "string" }
+          }
+        },
+        "enrichment": {
+          "type": "object",
+          "properties": {
+            "previousInterests": { "type": "array", "items": { "type": "string" } },
+            "readBooks": { "type": "array", "items": { "type": "string" } },
+            "moodTrend": { "type": "string" }
+          }
+        },
+        "limit": {
+          "type": "integer",
+          "default": 50,
+          "description": "Maximum books to return"
+        }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "candidateBooks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "bookId": { "type": "string" },
+              "title": { "type": "string" },
+              "author": { "type": "string" },
+              "genre": { "type": "string" },
+              "difficulty": { "type": "string" },
+              "synopsis": { "type": "string" },
+              "tags": { "type": "array", "items": { "type": "string" } },
+              "matchReasons": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "searchMetadata": {
+          "type": "object",
+          "properties": {
+            "totalCandidates": { "type": "integer" },
+            "genreDistribution": { "type": "object" },
+            "difficultyDistribution": { "type": "object" },
+            "searchTime": { "type": "integer" }
+          }
+        }
+      }
+    }
+  },
+
+  "dependencies": [
+    "context-agent"
+  ],
+
+  "executionPlan": {
+    "sequential": true,
+    "steps": [
+      {
+        "step": 1,
+        "name": "Build Query Filters",
+        "timeout": 1000,
+        "description": "Create SQL filters based on context"
+      },
+      {
+        "step": 2,
+        "name": "Query Database",
+        "timeout": 8000,
+        "description": "Execute search with multiple criteria"
+      },
+      {
+        "step": 3,
+        "name": "Apply Post-Filters",
+        "timeout": 1000,
+        "description": "Exclude read books, apply diversity"
+      },
+      {
+        "step": 4,
+        "name": "Rank Candidates",
+        "timeout": 1000,
+        "description": "Sort by relevance score"
+      },
+      {
+        "step": 5,
+        "name": "Return Results",
+        "timeout": 500,
+        "description": "Format and return top candidates"
+      }
+    ]
+  },
+
+  "tools": [
+    "neon_mcp",
+    "search_engine",
+    "filtering_engine"
+  ],
+
+  "errorHandling": {
+    "strategy": "graceful_degradation",
+    "errors": {
+      "DATABASE_QUERY_ERROR": {
+        "handling": "retry with simpler query",
+        "retry": true,
+        "maxRetries": 2,
+        "logging": "warning"
+      },
+      "NO_RESULTS": {
+        "handling": "expand search criteria and retry",
+        "retry": true,
+        "maxRetries": 1,
+        "logging": "info"
+      },
+      "FILTER_ERROR": {
+        "handling": "return all results without filters",
+        "retry": false,
+        "logging": "warning"
+      },
+      "TIMEOUT": {
+        "handling": "return partial results if available",
+        "retry": false,
+        "logging": "warning"
+      }
+    }
+  },
+
+  "performance": {
+    "targetTime": 3000,
+    "p95Time": 7000,
+    "maxResults": 50,
+    "caching": {
+      "enabled": true,
+      "ttl": 600,
+      "keys": ["genre_cache", "book_metadata_cache"]
+    }
+  },
+
+  "monitoring": {
+    "metrics": [
+      "query_execution_time",
+      "result_count",
+      "cache_hit_rate",
+      "genre_distribution",
+      "difficulty_distribution",
+      "diversity_score"
+    ],
+    "alerts": [
+      {
+        "metric": "query_time",
+        "threshold": 8000,
+        "action": "log_warning"
+      },
+      {
+        "metric": "result_count",
+        "threshold": 3,
+        "action": "expand_search"
+      }
+    ]
+  },
+
+  "effort": "high",
+  "model": "claude-opus-4-6"
+}

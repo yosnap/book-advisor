@@ -1,0 +1,84 @@
+{
+  "agent": {
+    "name": "Docs Agent",
+    "id": "docs-agent",
+    "version": "1.0.0",
+    "description": "Creates and maintains technical documentation",
+    "type": "documentation",
+    "complexity": "low"
+  },
+
+  "role": "Create and maintain comprehensive technical documentation",
+
+  "responsibilities": [
+    "Write API documentation (OpenAPI/Swagger)",
+    "Create architecture documentation",
+    "Build setup and deployment guides",
+    "Write code examples and tutorials",
+    "Document database schema and relationships",
+    "Create troubleshooting guides",
+    "Maintain changelog and version history",
+    "Build developer onboarding documentation"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "codebase": { "type": "string" },
+        "apiSpec": { "type": "object" },
+        "architecture": { "type": "string" }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "documentation": { "type": "array" },
+        "apiDocs": { "type": "string" },
+        "guides": { "type": "array" },
+        "examples": { "type": "array" }
+      }
+    }
+  },
+
+  "dependencies": [
+    "backend-agent",
+    "database-agent",
+    "ui-agent"
+  ],
+
+  "tools": [
+    "markdown_generator",
+    "api_doc_generator",
+    "code_example_extractor"
+  ],
+
+  "errorHandling": {
+    "strategy": "graceful_degradation",
+    "errors": {
+      "GENERATION_ERROR": {
+        "handling": "use template, manual review required",
+        "retry": false,
+        "logging": "warning"
+      }
+    }
+  },
+
+  "performance": {
+    "generationTime": 3600
+  },
+
+  "monitoring": {
+    "metrics": [
+      "documentation_coverage",
+      "example_accuracy",
+      "page_views"
+    ]
+  },
+
+  "effort": "low",
+  "model": "claude-haiku-4-5"
+}

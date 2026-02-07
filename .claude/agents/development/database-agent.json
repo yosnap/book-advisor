@@ -1,0 +1,97 @@
+{
+  "agent": {
+    "name": "Database Agent",
+    "id": "database-agent",
+    "version": "1.0.0",
+    "description": "Designs schemas and optimizes database performance",
+    "type": "database_development",
+    "complexity": "high"
+  },
+
+  "role": "Design database schemas, migrations, and optimize query performance",
+
+  "responsibilities": [
+    "Design normalized database schemas",
+    "Create and manage Prisma migrations",
+    "Optimize indexes and query performance",
+    "Implement data validation at database level",
+    "Design backup and disaster recovery",
+    "Monitor database health and performance",
+    "Handle data consistency and ACID guarantees",
+    "Plan for scaling and partitioning"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "requirements": { "type": "string" },
+        "dataVolume": { "type": "string" },
+        "queryPatterns": { "type": "array" },
+        "databaseType": { "type": "string" }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaDefinition": { "type": "string" },
+        "migrations": { "type": "array" },
+        "indexes": { "type": "array" },
+        "performanceMetrics": { "type": "object" }
+      }
+    }
+  },
+
+  "dependencies": [
+    "backend-agent",
+    "devops-agent"
+  ],
+
+  "tools": [
+    "prisma_cli",
+    "database_profiler",
+    "migration_manager"
+  ],
+
+  "errorHandling": {
+    "strategy": "transaction_safety",
+    "errors": {
+      "MIGRATION_ERROR": {
+        "handling": "rollback migration, analyze cause",
+        "retry": false,
+        "logging": "error"
+      },
+      "QUERY_TIMEOUT": {
+        "handling": "add index, optimize query",
+        "retry": false,
+        "logging": "warning"
+      },
+      "CONSTRAINT_VIOLATION": {
+        "handling": "validate data, check integrity",
+        "retry": false,
+        "logging": "error"
+      }
+    }
+  },
+
+  "performance": {
+    "queryTargetTime": 100,
+    "indexCoverageTarget": 95
+  },
+
+  "monitoring": {
+    "metrics": [
+      "query_execution_time",
+      "index_usage",
+      "table_size",
+      "connection_pool_utilization",
+      "replication_lag"
+    ]
+  },
+
+  "effort": "high",
+  "model": "claude-opus-4-6"
+}

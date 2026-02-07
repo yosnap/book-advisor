@@ -1,0 +1,95 @@
+{
+  "agent": {
+    "name": "Testing Agent",
+    "id": "testing-agent",
+    "version": "1.0.0",
+    "description": "Creates comprehensive test suites for quality assurance",
+    "type": "testing",
+    "complexity": "medium"
+  },
+
+  "role": "Develop unit, integration, and end-to-end tests",
+
+  "responsibilities": [
+    "Design test strategy and coverage plans",
+    "Write unit tests for functions and modules",
+    "Create integration tests for workflows",
+    "Build end-to-end tests for user scenarios",
+    "Implement test data factories and fixtures",
+    "Monitor test coverage and quality metrics",
+    "Implement performance testing",
+    "Create regression test suites"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "requirements": { "type": "string" },
+        "codebase": { "type": "string" },
+        "frameworks": { "type": "array" }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "unitTests": { "type": "array" },
+        "integrationTests": { "type": "array" },
+        "e2eTests": { "type": "array" },
+        "coverage": { "type": "object" }
+      }
+    }
+  },
+
+  "dependencies": [
+    "backend-agent",
+    "ui-agent",
+    "database-agent"
+  ],
+
+  "tools": [
+    "test_generator",
+    "coverage_analyzer",
+    "test_runner"
+  ],
+
+  "errorHandling": {
+    "strategy": "test_isolation",
+    "errors": {
+      "TEST_FAILURE": {
+        "handling": "log details, re-run in isolation",
+        "retry": true,
+        "maxRetries": 1,
+        "logging": "error"
+      },
+      "FLAKY_TEST": {
+        "handling": "mark as flaky, investigate",
+        "retry": false,
+        "logging": "warning"
+      }
+    }
+  },
+
+  "performance": {
+    "unitTestTargetTime": 5000,
+    "integrationTestTargetTime": 30000,
+    "e2eTestTargetTime": 60000,
+    "coverageTarget": 0.85
+  },
+
+  "monitoring": {
+    "metrics": [
+      "test_count",
+      "pass_rate",
+      "code_coverage",
+      "execution_time",
+      "flaky_test_rate"
+    ]
+  },
+
+  "effort": "medium",
+  "model": "claude-sonnet-4-5-20250929"
+}

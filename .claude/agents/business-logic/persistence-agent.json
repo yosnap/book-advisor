@@ -1,0 +1,206 @@
+{
+  "agent": {
+    "name": "Persistence Agent",
+    "id": "persistence-agent",
+    "version": "1.0.0",
+    "description": "Saves recommendations to database with ACID guarantees",
+    "type": "persistence",
+    "complexity": "high"
+  },
+
+  "role": "Persist recommendation data to database with transactional integrity",
+
+  "responsibilities": [
+    "Create or update ReaderContext record",
+    "Create Recommendation record",
+    "Create RecommendationBook junction records",
+    "Update historical data (previousMoods, readBooks)",
+    "Ensure ACID properties",
+    "Handle concurrent writes safely",
+    "Return persisted recommendation ID"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "required": ["userId", "context", "justifiedBooks"],
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "User identifier"
+        },
+        "context": {
+          "type": "object",
+          "properties": {
+            "mood": { "type": "string" },
+            "profile": { "type": "string" },
+            "interests": { "type": "array", "items": { "type": "string" } },
+            "intent": { "type": "string" }
+          }
+        },
+        "justifiedBooks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "bookId": { "type": "string" },
+              "score": { "type": "number" },
+              "justification": { "type": "string" },
+              "keyReasons": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "processingTime": { "type": "integer" },
+            "agentsUsed": { "type": "array", "items": { "type": "string" } },
+            "requestId": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "recommendationId": { "type": "string" },
+        "contextId": { "type": "string" },
+        "bookCount": { "type": "integer" },
+        "persistenceStatus": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "persistenceMetadata": {
+          "type": "object",
+          "properties": {
+            "transactionId": { "type": "string" },
+            "persistenceTime": { "type": "integer" },
+            "recordsCreated": { "type": "integer" },
+            "booksLinked": { "type": "integer" }
+          }
+        }
+      }
+    }
+  },
+
+  "dependencies": [
+    "justifier-agent"
+  ],
+
+  "executionPlan": {
+    "sequential": true,
+    "blocking": true,
+    "steps": [
+      {
+        "step": 1,
+        "name": "Begin Transaction",
+        "timeout": 1000,
+        "description": "Start ACID transaction"
+      },
+      {
+        "step": 2,
+        "name": "Upsert ReaderContext",
+        "timeout": 2000,
+        "description": "Create or update user context"
+      },
+      {
+        "step": 3,
+        "name": "Create Recommendation",
+        "timeout": 1000,
+        "description": "Insert Recommendation record"
+      },
+      {
+        "step": 4,
+        "name": "Create RecommendationBooks",
+        "timeout": 2000,
+        "description": "Insert junction records"
+      },
+      {
+        "step": 5,
+        "name": "Commit Transaction",
+        "timeout": 1000,
+        "description": "Finalize all changes"
+      },
+      {
+        "step": 6,
+        "name": "Return Results",
+        "timeout": 500,
+        "description": "Confirm persistence"
+      }
+    ]
+  },
+
+  "tools": [
+    "neon_mcp",
+    "transaction_manager"
+  ],
+
+  "errorHandling": {
+    "strategy": "transactional_rollback",
+    "errors": {
+      "TRANSACTION_START_FAILED": {
+        "handling": "retry entire process",
+        "retry": true,
+        "maxRetries": 3,
+        "logging": "error"
+      },
+      "CONSTRAINT_VIOLATION": {
+        "handling": "rollback and notify",
+        "retry": false,
+        "logging": "error"
+      },
+      "DEADLOCK": {
+        "handling": "rollback and retry with backoff",
+        "retry": true,
+        "maxRetries": 2,
+        "logging": "warning"
+      },
+      "TIMEOUT": {
+        "handling": "rollback transaction",
+        "retry": true,
+        "maxRetries": 1,
+        "logging": "error"
+      },
+      "PERSISTENCE_FAILED": {
+        "handling": "return error to orchestrator for async retry",
+        "retry": true,
+        "maxRetries": 0,
+        "failurePolicy": "async_retry_with_logging",
+        "logging": "error"
+      }
+    }
+  },
+
+  "performance": {
+    "targetTime": 2000,
+    "p95Time": 4000,
+    "maxRetries": 3
+  },
+
+  "transactionConfig": {
+    "isolationLevel": "serializable",
+    "timeout": 5000,
+    "retryBackoff": [100, 500, 2000]
+  },
+
+  "monitoring": {
+    "metrics": [
+      "transaction_success_rate",
+      "persistence_time",
+      "deadlock_count",
+      "rollback_count",
+      "concurrent_write_conflicts"
+    ],
+    "alerts": [
+      {
+        "metric": "transaction_success_rate",
+        "threshold": 0.95,
+        "action": "alert"
+      }
+    ]
+  },
+
+  "effort": "high",
+  "model": "claude-opus-4-6"
+}

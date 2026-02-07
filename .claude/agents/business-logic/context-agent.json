@@ -1,0 +1,204 @@
+{
+  "agent": {
+    "name": "Context Agent",
+    "id": "context-agent",
+    "version": "1.0.0",
+    "description": "Enriches and validates reader context from user input",
+    "type": "data_enrichment",
+    "complexity": "medium"
+  },
+
+  "role": "Capture, validate and enrich reader context for personalized recommendations",
+
+  "responsibilities": [
+    "Validate user-provided context against schema",
+    "Enrich context with historical data from database",
+    "Detect mood patterns and reader evolution",
+    "Check for incomplete or inconsistent data",
+    "Merge current input with user preferences",
+    "Return normalized, validated context"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "required": ["userId", "context"],
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique user identifier"
+        },
+        "context": {
+          "type": "object",
+          "required": ["mood", "profile", "interests", "intent"],
+          "properties": {
+            "mood": {
+              "type": "string",
+              "enum": ["feliz", "triste", "reflexivo", "ansioso", "neutral"],
+              "description": "Current emotional state"
+            },
+            "profile": {
+              "type": "string",
+              "enum": ["novato", "intermedio", "avanzado", "experto"],
+              "description": "Reader experience level"
+            },
+            "interests": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1,
+              "description": "Genre/topic interests"
+            },
+            "intent": {
+              "type": "string",
+              "enum": ["relax", "aprendizaje", "evasión"],
+              "description": "Reading goal"
+            }
+          }
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Optional request tracking"
+        }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "required": ["userId", "context", "enrichment"],
+      "properties": {
+        "userId": { "type": "string" },
+        "context": {
+          "type": "object",
+          "properties": {
+            "mood": { "type": "string" },
+            "profile": { "type": "string" },
+            "interests": { "type": "array", "items": { "type": "string" } },
+            "intent": { "type": "string" }
+          }
+        },
+        "enrichment": {
+          "type": "object",
+          "properties": {
+            "previousMoods": { "type": "array", "items": { "type": "string" } },
+            "previousInterests": { "type": "array", "items": { "type": "string" } },
+            "readBooks": { "type": "array", "items": { "type": "string" } },
+            "moodTrend": { "type": "string" },
+            "profileEvolution": { "type": "string" }
+          }
+        },
+        "validationStatus": {
+          "type": "object",
+          "properties": {
+            "valid": { "type": "boolean" },
+            "warnings": { "type": "array", "items": { "type": "string" } },
+            "corrections": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  },
+
+  "dependencies": [],
+
+  "executionPlan": {
+    "sequential": true,
+    "steps": [
+      {
+        "step": 1,
+        "name": "Validate Input Schema",
+        "timeout": 1000,
+        "description": "Check all required fields and enum values"
+      },
+      {
+        "step": 2,
+        "name": "Fetch User History",
+        "timeout": 3000,
+        "description": "Query ReaderContext from database"
+      },
+      {
+        "step": 3,
+        "name": "Detect Mood Patterns",
+        "timeout": 2000,
+        "description": "Analyze previousMoods array for trends"
+      },
+      {
+        "step": 4,
+        "name": "Enrich Interests",
+        "timeout": 1000,
+        "description": "Merge current + historical interests"
+      },
+      {
+        "step": 5,
+        "name": "Return Enriched Context",
+        "timeout": 500,
+        "description": "Format output with all enrichment data"
+      }
+    ]
+  },
+
+  "tools": [
+    "neon_mcp",
+    "validation_engine",
+    "context_store"
+  ],
+
+  "errorHandling": {
+    "strategy": "validation_with_defaults",
+    "errors": {
+      "INVALID_SCHEMA": {
+        "handling": "return validation error with suggestions",
+        "retry": false,
+        "logging": "error"
+      },
+      "USER_NOT_FOUND": {
+        "handling": "create new ReaderContext with defaults",
+        "retry": false,
+        "logging": "info"
+      },
+      "HISTORY_FETCH_ERROR": {
+        "handling": "continue with current input only",
+        "retry": true,
+        "maxRetries": 2,
+        "logging": "warning"
+      },
+      "ENRICHMENT_ERROR": {
+        "handling": "return input without enrichment",
+        "retry": false,
+        "logging": "warning"
+      }
+    }
+  },
+
+  "performance": {
+    "targetTime": 3000,
+    "p95Time": 5000,
+    "caching": {
+      "enabled": true,
+      "ttl": 300,
+      "keys": ["user_context", "user_history"]
+    }
+  },
+
+  "monitoring": {
+    "metrics": [
+      "validation_success_rate",
+      "history_cache_hits",
+      "enrichment_quality_score",
+      "context_variance"
+    ],
+    "alerts": [
+      {
+        "metric": "validation_error_rate",
+        "threshold": 0.1,
+        "action": "log_warning"
+      }
+    ]
+  },
+
+  "effort": "medium",
+  "model": "claude-sonnet-4-5-20250929"
+}

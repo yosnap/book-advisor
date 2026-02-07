@@ -35,7 +35,6 @@ model Book {
 
   @@index([genre])
   @@index([author])
-  @@fulltext([title, synopsis]) // For full-text search
 }
 
 /// Reader context and preferences

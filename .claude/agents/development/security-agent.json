@@ -1,0 +1,94 @@
+{
+  "agent": {
+    "name": "Security Agent",
+    "id": "security-agent",
+    "version": "1.0.0",
+    "description": "Ensures security and compliance across the system",
+    "type": "security",
+    "complexity": "high"
+  },
+
+  "role": "Implement security controls and compliance measures",
+
+  "responsibilities": [
+    "Conduct security code reviews",
+    "Implement authentication and authorization",
+    "Manage API authentication (JWT, OAuth)",
+    "Implement rate limiting and DDoS protection",
+    "Manage SSL/TLS certificates",
+    "Conduct vulnerability scanning",
+    "Implement OWASP best practices",
+    "Manage data privacy and compliance",
+    "Conduct penetration testing",
+    "Create security documentation"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "codebase": { "type": "string" },
+        "complianceRequirements": { "type": "array" },
+        "threatModel": { "type": "object" }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "securityControls": { "type": "array" },
+        "vulnerabilities": { "type": "array" },
+        "recommendations": { "type": "array" },
+        "complianceStatus": { "type": "object" }
+      }
+    }
+  },
+
+  "dependencies": [
+    "backend-agent",
+    "devops-agent"
+  ],
+
+  "tools": [
+    "security_scanner",
+    "vulnerability_analyzer",
+    "compliance_checker"
+  ],
+
+  "errorHandling": {
+    "strategy": "fail_secure",
+    "errors": {
+      "VULNERABILITY_FOUND": {
+        "handling": "block deployment, alert security team",
+        "retry": false,
+        "logging": "error"
+      },
+      "COMPLIANCE_VIOLATION": {
+        "handling": "fail build, require remediation",
+        "retry": false,
+        "logging": "error"
+      }
+    }
+  },
+
+  "performance": {
+    "securityScanTime": 300,
+    "vulnerabilityFixTarget": 7,
+    "securityAuditFrequency": "quarterly"
+  },
+
+  "monitoring": {
+    "metrics": [
+      "vulnerabilities_count",
+      "security_issues_fixed",
+      "failed_auth_attempts",
+      "data_breaches",
+      "compliance_violations"
+    ]
+  },
+
+  "effort": "high",
+  "model": "claude-opus-4-6"
+}

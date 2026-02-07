@@ -1,0 +1,101 @@
+{
+  "agent": {
+    "name": "Backend Agent",
+    "id": "backend-agent",
+    "version": "1.0.0",
+    "description": "Builds and maintains REST APIs and server logic",
+    "type": "backend_development",
+    "complexity": "high"
+  },
+
+  "role": "Develop and maintain backend APIs, business logic, and integrations",
+
+  "responsibilities": [
+    "Design and implement REST/GraphQL APIs",
+    "Build request/response validation layers",
+    "Implement authentication and authorization",
+    "Manage external service integrations",
+    "Build middleware and error handling",
+    "Optimize database queries and caching",
+    "Version APIs and manage deprecation"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "requirements": { "type": "string" },
+        "existingCode": { "type": "string" },
+        "framework": { "type": "string" },
+        "nodeVersion": { "type": "string" }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "endpoints": { "type": "array" },
+        "middleware": { "type": "array" },
+        "errorHandlers": { "type": "array" },
+        "integrations": { "type": "array" }
+      }
+    }
+  },
+
+  "dependencies": [
+    "database-agent",
+    "devops-agent"
+  ],
+
+  "tools": [
+    "code_generator",
+    "api_validator",
+    "git_integration"
+  ],
+
+  "errorHandling": {
+    "strategy": "graceful_degradation",
+    "errors": {
+      "API_ERROR": {
+        "handling": "return descriptive error responses",
+        "retry": false,
+        "logging": "error"
+      },
+      "DATABASE_ERROR": {
+        "handling": "fallback to cached data",
+        "retry": true,
+        "maxRetries": 3,
+        "logging": "warning"
+      },
+      "VALIDATION_ERROR": {
+        "handling": "return 400 with validation details",
+        "retry": false,
+        "logging": "info"
+      }
+    }
+  },
+
+  "performance": {
+    "targetResponseTime": 200,
+    "p95ResponseTime": 500,
+    "caching": {
+      "enabled": true,
+      "strategies": ["redis", "in-memory", "http"]
+    }
+  },
+
+  "monitoring": {
+    "metrics": [
+      "request_count",
+      "error_rate",
+      "response_time",
+      "cache_hit_rate",
+      "dependency_latency"
+    ]
+  },
+
+  "effort": "high",
+  "model": "claude-opus-4-6"
+}

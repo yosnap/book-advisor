@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "@prisma/client": "^6.19.2",
+    "dotenv": "^17.2.4",
+    "prisma": "^6.19.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "scripts": {
+    "prisma:seed": "prisma db seed",
+    "db:migrate": "prisma migrate dev",
+    "db:reset": "prisma migrate reset"
+  }
+}

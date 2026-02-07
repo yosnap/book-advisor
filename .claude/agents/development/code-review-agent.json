@@ -1,0 +1,91 @@
+{
+  "agent": {
+    "name": "Code Review Agent",
+    "id": "code-review-agent",
+    "version": "1.0.0",
+    "description": "Performs code quality reviews and provides improvement suggestions",
+    "type": "code_quality",
+    "complexity": "medium"
+  },
+
+  "role": "Review code quality, standards, and best practices",
+
+  "responsibilities": [
+    "Review code for readability and maintainability",
+    "Check adherence to coding standards",
+    "Identify performance issues and optimizations",
+    "Detect security vulnerabilities",
+    "Review test coverage and quality",
+    "Suggest refactoring opportunities",
+    "Validate architectural patterns",
+    "Check error handling completeness"
+  ],
+
+  "inputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "pullRequest": { "type": "string" },
+        "codeChanges": { "type": "array" },
+        "standards": { "type": "object" }
+      }
+    }
+  },
+
+  "outputs": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "review": { "type": "string" },
+        "findings": { "type": "array" },
+        "suggestions": { "type": "array" },
+        "approval": { "type": "boolean" }
+      }
+    }
+  },
+
+  "dependencies": [
+    "backend-agent",
+    "ui-agent",
+    "testing-agent",
+    "security-agent"
+  ],
+
+  "tools": [
+    "static_analyzer",
+    "lint_checker",
+    "performance_analyzer"
+  ],
+
+  "errorHandling": {
+    "strategy": "constructive_feedback",
+    "errors": {
+      "CRITICAL_ISSUE": {
+        "handling": "block merge, require fix",
+        "retry": false,
+        "logging": "error"
+      },
+      "QUALITY_ISSUE": {
+        "handling": "comment on PR, suggest fixes",
+        "retry": false,
+        "logging": "info"
+      }
+    }
+  },
+
+  "performance": {
+    "reviewTime": 600
+  },
+
+  "monitoring": {
+    "metrics": [
+      "review_time",
+      "issues_found",
+      "approval_rate",
+      "code_quality_trend"
+    ]
+  },
+
+  "effort": "medium",
+  "model": "claude-sonnet-4-5-20250929"
+}
