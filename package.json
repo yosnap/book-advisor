@@ -1,6 +1,11 @@
 {
+  "name": "book-advisor",
+  "version": "0.3.0",
+  "description": "Intelligent book recommendation system powered by Claude",
+  "private": true,
   "dependencies": {
     "@prisma/client": "^6.19.2",
+    "@tailwindcss/postcss": "^4.1.18",
     "dotenv": "^17.2.4",
     "next": "^16.1.6",
     "next-auth": "^4.24.13",
@@ -11,17 +16,32 @@
     "typescript": "^5.3.3",
     "zod": "^4.3.6"
   },
-  "prisma": {
-    "seed": "node prisma/seed.js"
-  },
-  "scripts": {
-    "prisma:seed": "prisma db seed",
-    "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset"
-  },
   "devDependencies": {
+    "@types/react": "19.2.13",
     "autoprefixer": "^10.4.24",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
+    "db:migrate": "prisma migrate dev",
+    "db:reset": "prisma migrate reset",
+    "db:studio": "prisma studio",
+    "db:push": "prisma db push",
+    "prisma:generate": "prisma generate",
+    "prisma:seed": "prisma db seed",
+    "prisma:validate": "prisma validate"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
   }
 }
